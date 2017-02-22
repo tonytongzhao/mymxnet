@@ -38,9 +38,28 @@ class MNIST:
         self.pos+=batch_size
         return self.x[p:self.pos,:], self.y[p:self.pos, :]
 
-mnist=MNIST()
+class FakeData(object):
+    def __init__(self, num_classes, num_features):
+        self.num_classes=num_classes
+        self.num_features=num_features
+        self.mu=np.random.rand(num_classes, self.num_features**2)
+        self.sigma=np.ones((num_classes, self.num_features**2))*0.1
+    
+    def get(self, num_samples):
+        num_cls_samples=num_samples/self.num_classes
+        x=np.zeros((num_samples, self.num_features**2)).reshape((num_samples, 1, self.num_features, self.num_features))
+        y=np.zeros((num_samples,))
+        for i in xrange(self.num_classes):
+            cls_samples=np.random.normal(self.mu[i,:], self.sigma[i,:], (num_cls_samples, self.num_features**2)).reshape((num_cls_samples, 1,self.num_features, self.num_features))
+            x[i*num_cls_samples:(i+1)*num_cls_samples]=cls_samples 
+            y[i*num_cls_samples:(i+1)*num_cls_samples]=i
+
+        return x,y
+num_classes=10
+num_feature=28
 batch_size=1024
 shape=[batch_size, 1, 28, 28]
+mnist=FakeData(num_classes, num_feature)
 print batch_size
 tic=time.time()
 acc=train(lenet(), shape, lambda: mnist.get(batch_size), [mx.gpu(),],[1,])
