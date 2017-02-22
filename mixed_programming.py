@@ -5,7 +5,7 @@ import logging
 class mymlp:
     def __init__(self, classes, fc1_hd, fc2_hd, act, output):
         self.fc1_hd=fc1_hd
-        self.fc2_hd=fc1_hd
+        self.fc2_hd=fc2_hd
         self.act=act
         self.output=output
         self.classes=classes
@@ -41,17 +41,20 @@ class ToyData(object):
 num_classes=10
 num_features=100
 #x,y=data.get(50000)
-batch_size=100
+batch_size=10000
 net=mymlp(num_classes,128,64,'relu','Softmax').construct()
 ex=net.simple_bind(ctx=mx.gpu(),data=(batch_size, num_features))
 args=dict(zip(net.list_arguments(), ex.arg_arrays))
 for name in args:
     print name, args[name].shape, args[name].context
-
+outs=dict(zip(net.list_outputs(), ex.outputs))
+print 'Outputs'
+for name in outs:
+    print name, outs[name].shape, outs[name].context
 for name in args:
     data=args[name]
     data[:]=mx.random.uniform(-0.1,0.1,data.shape)
-
+print 'output shape', ex.outputs[0].shape
 learning_rate=0.1
 final_acc=0.0
 
@@ -66,6 +69,8 @@ for i in xrange(100):
         weight[:]-=learning_rate*(grad/batch_size)
     if i%10==0:
         acc=(mx.nd.argmax_channel(ex.outputs[0]).asnumpy()==y).sum()
+        print mx.nd.argmax_channel(ex.outputs[0]).asnumpy()[:10]
+        print y[:10]
         final_acc=acc
         print 'iteration %d, acc %f' %(i, float(acc)/y.shape[0])
 
