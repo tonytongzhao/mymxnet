@@ -28,7 +28,7 @@ def lenet():
 
 class MNIST:
     def __init__(self):
-        mnist=fetch_mldata('MNIST original')
+        mnist=fetch_mldata('MNIST original',data_home='.')
         p=np.random.permutation(mnist.data.shape[0])
         self.x=mnist.data[p]
         self.y=mnist.target[p]
