@@ -97,15 +97,15 @@ init_h=[('l%d_init_h'%l, (batch_size, num_hidden)) for l in xrange(num_lstm_laye
 init_states=init_c+init_h
 data_train=bucket_io.BucketSentenceIter('./mldata/obama.txt', vocab, [seq_len],batch_size, init_states, seperate_char='\n', text2id=text2id, read_content=read_content)
 
-num_epoch=1
+num_epoch=10
 learning_rate=0.01
 
-model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=5, learning_rate=learning_rate, momentum=0,wd=0.0001)
+model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=5, learning_rate=learning_rate, momentum=0,wd=0.0001, initializer=mx.init.Xavier(factor_type='in',magnitude=2.34))
 #model=mx.mod.Module(ctx=mx.gpu(0),symbol=symbol, initializer=mx.init.Xavier(factor_type='in', magnitude=2.34))
 
 model.fit(X=data_train, eval_metric=mx.metric.np(Perplexity),batch_end_callback=mx.callback.Speedometer(batch_size,20),epoch_end_callback=mx.callback.do_checkpoint('obama'))
 
-_,arg_params,__=mx.model.load_checkpoint('obama',75)
+_,arg_params,__=mx.model.load_checkpoint('obama',5)
 
 model=LSTMInferenceModel(num_lstm_layer, len(vocab)+1, num_hidden=num_hidden, num_embed=num_embed,num_label=len(vocab)+1, arg_params=arg_params, ctx=mx.gpu(), dropout=0.2)
 
@@ -134,3 +134,4 @@ for i in xrange(seq_length):
 	if i>=ignore_length-1:
 		output+=next_char
 print output
+
