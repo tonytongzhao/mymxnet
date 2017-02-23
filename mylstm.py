@@ -13,7 +13,7 @@ LSTMModel = namedtuple('LSTMModel', ['rnn_exec', 'symbol','init_states','last_st
 def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     #LSTM Cell symbol
     if dropout>0.:
-        indata=mx.sym.Dropout(data=indata, p=droupout)
+        indata=mx.sym.Dropout(data=indata, p=dropout)
     #Combine Wi, Wf, Wc, Wo into one i2h
     #Combine Ui, Uf, Uc, Uo into one h2h
     i2h=mx.sym.FullyConnected(data=indata, weight=param.i2h_weight, bias=param.i2h_bias, num_hidden=num_hidden*4, name='t%d_l%d_i2h'%(seqidx, layeridx) )
@@ -21,7 +21,7 @@ def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
 
     gates=i2h+h2h
 
-    slice_gates = mx.sym.SliceChinel(gates, num_outputs=4, name='t%d_l%d_slice'%(seqidx, layeridx))
+    slice_gates = mx.sym.SliceChannel(gates, num_outputs=4, name='t%d_l%d_slice'%(seqidx, layeridx))
 
     in_gate = mx.sym.Activation(slice_gates[0], act_type='sigmoid')
     forget_gate=mx.sym.Activation(slice_gates[1], act_type='sigmoid')
@@ -29,7 +29,7 @@ def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
 
     in_transform = mx.sym.Activation(slice_gates[3], act_type='tanh')
 
-    next_c=(fotget_gate* prev_state.c)+(in_gate*in_transform)
+    next_c=(forget_gate* prev_state.c)+(in_gate*in_transform)
     next_h=out_gate*mx.sym.Activation(next_c, act_type='tanh')
 
     return LSTMState(c=next_c, h=next_h)
@@ -56,7 +56,7 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
     loss_all=[]
     for seqidx in xrange(seq_len):
         data=mx.sym.Variable('data/%d'%seqidx)
-        hidden=mx.sym.Embedding(data, weight=embed_weight, input_dim=input_size, output_dim=num_embed,name='t%d_embed'%(seqidx))
+        hidden=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=input_size, output_dim=num_embed,name='t%d_embed'%(seqidx))
         
         #Deep LSTM
         for i in xrange(num_lstm_layer):
@@ -66,12 +66,12 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
                 dp_ratio=dropout
             next_state=lstm(num_hidden, indata=hidden, prev_state=last_states[i],param=param_cells[i],seqidx=seqidx, layeridx=i, dropout=dp_ratio)
             hidden=next_state.h
-            last_state[i]=next_state
+            last_states[i]=next_state
 
         if dropout:
-            hidden=mx.sym.Droupout(hidden, p= dropout)
-        fc=mx.sym.FullyConnected(hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-        sm = mx.sym.SoftmaxOutput(fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx)
+            hidden=mx.sym.Dropout(data=hidden, p= dropout)
+        fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
+        sm = mx.sym.SoftmaxOutput(data=fc, label=mx.sym.Variable('label/%d'%seqidx), name='t%d_sm'%seqidx)
         loss_all.append(sm)
     return mx.sym.Group(loss_all)
 
