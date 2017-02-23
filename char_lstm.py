@@ -3,6 +3,8 @@ import os, urllib, zipfile
 import mylstm
 import numpy as np
 import bucket_io
+from my_lstm_inference import LSTMInferenceModel
+import random
 #if not os.path.exists('char_lstm.zip'):
 #	urllib.urlretrieve('http://data.mxnet.io/data/char_lstm.zip', 'char_lstm.zip')
 #with zipfile.ZipFile('char_lstm.zip', 'r') as f:
@@ -33,6 +35,50 @@ def Perplexity(label, pred):
     for i in range(pred.shape[0]):
         loss+=-np.log(max(1e-10, pred[i][int(label[i])]))
     return np.exp(loss/label.size)
+
+def MakeRevertVocab(vocab):
+	dic={}
+	for k, v in vocab.items():
+		dic[v]=k
+	return dic
+
+def MakeInput(char, vocab, arr):
+	idx=vocab[char]
+	tmp=np.zeros((1,))
+	tmp[0]=idx
+	arr[:]=tmp
+
+
+def _cdf(weights):
+	total=sum(weights)
+	result=[]
+	cusum=0
+	for w in weights:
+		cusum+=w
+		result.append(cusum/total)
+	return result
+
+def _choice(population, weights):
+	cdf_vals=_cdf(weights)
+	x=random.random()
+	idx=bisec.bisec(cdf_vals,x)
+	return population[idx]
+
+
+def MakeOutput(prob, vocab, sample=False, temperature=1.):
+	if not sample:
+		idx=np.argmax(prob, axis=1)[0]
+	else:
+		idx=np.random.choice(range(len(prob)))
+
+	try:
+		char=vocab[idx]
+	except:
+		char=''
+	return char
+
+
+
 vocab=build_vocab('./mldata/obama.txt')
 
 seq_len=129
@@ -54,9 +100,37 @@ data_train=bucket_io.BucketSentenceIter('./mldata/obama.txt', vocab, [seq_len],b
 num_epoch=1
 learning_rate=0.01
 
-model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=5, learning_rate=learning_rate, initializer=mx.init.Xavier(factor_type='in', magnitude=2.34))
+model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=5, learning_rate=learning_rate, momentum=0,wd=0.0001)
 #model=mx.mod.Module(ctx=mx.gpu(0),symbol=symbol, initializer=mx.init.Xavier(factor_type='in', magnitude=2.34))
 
-model.fit(X=data_train, eval_metric=mx.metric.np(Perplexity),batch_end_callback=mx.callback.Speedometer(batch_size,20))
+model.fit(X=data_train, eval_metric=mx.metric.np(Perplexity),batch_end_callback=mx.callback.Speedometer(batch_size,20),epoch_end_callback=mx.callback.do_checkpoint('obama'))
+
+_,arg_params,__=mx.model.load_checkpoint('obama',75)
+
+model=LSTMInferenceModel(num_lstm_layer, len(vocab)+1, num_hidden=num_hidden, num_embed=num_embed,num_label=len(vocab)+1, arg_params=arg_params, ctx=mx.gpu(), dropout=0.2)
 
 
+seq_length=600
+input_ndarray=mx.nd.zeros((1,))
+revert_vocab=MakeRevertVocab(vocab)
+output='The United States'
+print output
+random_sample=False
+new_sentence=True
+
+ignore_length=len(output)
+
+for i in xrange(seq_length):
+	if i<=ignore_length-1:
+		MakeInput(output[i], vocab, input_ndarray)
+	else:
+		MakeInput(output[-1], vocab, input_ndarray)
+
+	prob=model.forward(input_ndaray,new_sentence)
+	new_sentence=False
+	next_char=MakeOutput(prob,revert_vocab,random_sample)
+	if next_char=='':
+		new_sentence=True
+	if i>=ignore_length-1:
+		output+=next_char
+print output

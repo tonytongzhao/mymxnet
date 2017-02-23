@@ -105,7 +105,7 @@ def lstm_inference_symbol(num_lstm_layer, input_size, num_hidden, num_embed, num
     assert(len(last_states)==num_lstm_layer)
 
 
-    data=mx.sym.Variable('data%d' % seqidx)
+    data=mx.sym.Variable('data/%d' % seqidx)
 
 
     hidden=mx.sym.Embedding(data, weight=embed_weight, input_dim=input_size, output_dim=num_embed,name='t%d_embed'%(seqidx))
