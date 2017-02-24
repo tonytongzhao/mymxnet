@@ -99,10 +99,10 @@ data_train=bucket_io.BucketSentenceIter('./mldata/obama.txt', vocab, [seq_len],b
 
 num_epoch=10
 learning_rate=0.01
-
+import logging
 model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=5, learning_rate=learning_rate, momentum=0,wd=0.0001, initializer=mx.init.Xavier(factor_type='in',magnitude=2.34))
 #model=mx.mod.Module(ctx=mx.gpu(0),symbol=symbol, initializer=mx.init.Xavier(factor_type='in', magnitude=2.34))
-
+logging.basicConfig(level=logging.DEBUG)
 model.fit(X=data_train, eval_metric=mx.metric.np(Perplexity),batch_end_callback=mx.callback.Speedometer(batch_size,20),epoch_end_callback=mx.callback.do_checkpoint('obama'))
 
 _,arg_params,__=mx.model.load_checkpoint('obama',5)
@@ -126,7 +126,7 @@ for i in xrange(seq_length):
 	else:
 		MakeInput(output[-1], vocab, input_ndarray)
 
-	prob=model.forward(input_ndaray,new_sentence)
+	prob=model.forward(input_ndarray,new_sentence)
 	new_sentence=False
 	next_char=MakeOutput(prob,revert_vocab,random_sample)
 	if next_char=='':

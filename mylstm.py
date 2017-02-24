@@ -118,12 +118,12 @@ def lstm_inference_symbol(num_lstm_layer, input_size, num_hidden, num_embed, num
             dp_ratio=dropout
         next_state=lstm(num_hidden, indata=hidden, prev_state=last_states[i],param=param_cells[i],seqidx=seqidx, layeridx=i, dropout=dp_ratio)
         hidden=next_state.h
-        last_state[i]=next_state
+        last_states[i]=next_state
 
     if dropout:
-        hidden=mx.sym.Droupout(hidden, p= dropout)
-    fc=mx.sym.FullyConnected(hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-    sm = mx.sym.SoftmaxOutput(fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx)
+        hidden=mx.sym.Dropout(data=hidden, p= dropout)
+    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
+    sm = mx.sym.SoftmaxOutput(data=fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx)
     out=[sm]
     for state in last_states:
         out.append(state.c)
