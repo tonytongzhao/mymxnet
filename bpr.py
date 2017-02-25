@@ -118,7 +118,7 @@ def train(data, user_pos,max_user,max_item, network, batch_size, num_epoch, lear
         outputs=network.get_outputs()
         network.backward()
         logging.info("Iter:%d, Error:%f" %(i,outputs[0].asnumpy().sum()/(batch_size+0.0)))	
-        if i%50==0:
+        if i%100==0:
             params=network.get_params()[0]
             for x in params:
                 if x=='user_weight':
@@ -132,7 +132,9 @@ def train(data, user_pos,max_user,max_item, network, batch_size, num_epoch, lear
          #       print u
                 auc_u=cal_AUC(u,res[u,:],user_pos[u], max_item)
                 auc+=auc_u
-            print 'Iterations %d, AUC on training %f' %(i, auc/res.shape[0])
+            logging.basicConfig(level=logging.DEBUG)
+	    sys.stdout.write('\rIterations\t%d, AUC on training\t%f' %(i, auc/res.shape[0]))
+            sys.stdout.flush()
         network.update()
 
 
@@ -144,16 +146,20 @@ data_file=sys.argv[1]
 user_dict={}
 item_dict={}
 data=[]
+num_feedback=0
 with open(data_file, 'r') as f:
     for line in f:
         tks=line.strip().split('\t')
         user, pos_item=convert_data(tks[0],tks[1],user_dict, item_dict)
+        num_feedback+=1
         data.append([user, pos_item])
         user_pos_item[user].add(pos_item)
 max_user=len(user_dict)
 max_item=len(item_dict)
-print '#User ', max_user
-print '#Item ', max_item
+print 'mxnet bpr exercise'
+print '#user\t', max_user
+print '#item\t', max_item
+print '#feedback\t', num_feedback
 for i in xrange(len(data)):
     u,p=data[i]
     n=random.choice(range(max_item))
@@ -165,9 +171,15 @@ num_hidden=64
 num_epoch=2000
 batch_size=100
 learning_rate=0.01
+print '#hidden_factor\t',num_hidden
+print '#num_epoch\t', num_epoch
+print 'batch_size\t', batch_size
+print 'learning_rate\t', learning_rate
+print 'start training'
+
 net=get_network(num_hidden, max_user, max_item)
 train(data,user_pos_item, max_user, max_item, net, batch_size, num_epoch, learning_rate)
-
+print '\n'
 
 
 
