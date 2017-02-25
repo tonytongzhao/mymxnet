@@ -1,7 +1,6 @@
 import mxnet as mx
 import numpy as np
 import logging
-import data
 from autoencoder import AutoEncoderModel
 
 
@@ -11,7 +10,7 @@ if __name__ == '__main__':
     ae_model = AutoEncoderModel(mx.gpu(0), [784,500,500,2000,10], pt_dropout=0.2,
         internal_act='relu', output_act='relu')
 
-    X, _ = data.get_mnist()
+    X=np.random.rand(100000,784)
     train_X = X[:60000]
     val_X = X[60000:]
 

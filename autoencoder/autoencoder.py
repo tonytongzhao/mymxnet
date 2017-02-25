@@ -9,7 +9,7 @@ try:
 except:
    import pickle
 
-class AutoEncoderModel(model.MXModel):
+class AutoEncoderModel(model.mxmodel):
     def setup(self, dims, sparseness_penalty=None, pt_dropout=None, ft_dropout=None, input_act=None, internal_act='relu', output_act=None):
         self.N = len(dims) - 1
         self.dims = dims
