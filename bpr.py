@@ -54,10 +54,13 @@ def get_network(num_hidden, max_user, max_item):
     user=mx.sym.Variable('user')
     pos_item=mx.sym.Variable('pos_item')
     neg_item=mx.sym.Variable('neg_item')
-    user=mx.sym.Embedding(data=user, input_dim=max_user, output_dim=num_hidden)
 
-    pos_item=mx.sym.Embedding(data=pos_item, input_dim=max_item, output_dim=num_hidden)
-    neg_item=mx.sym.Embedding(data=neg_item, input_dim=max_item, output_dim=num_hidden)
+    user_weight=mx.sym.Variable('user_weight')
+    item_weight=mx.sym.Variable('item_weight')
+    user=mx.sym.Embedding(data=user, input_dim=max_user, weight=user_weight, output_dim=num_hidden)
+
+    pos_item=mx.sym.Embedding(data=pos_item, input_dim=max_item, weight=item_weight, output_dim=num_hidden)
+    neg_item=mx.sym.Embedding(data=neg_item, input_dim=max_item, weight=item_weight, output_dim=num_hidden)
 
     item_diff=neg_item-pos_item
     res=user*item_diff
@@ -75,7 +78,32 @@ def convert_data(user, item, user_dict, item_dict):
     item=item_dict[item]
     return (user, item)
 
-def train(data, network, batch_size, num_epoch, learning_rate):
+def cal_AUC(user, scores, pos_items, max_item, ignore=None):
+    scores=mx.nd.array(scores).reshape((1,max_item))
+    #print scores.shape
+    candidates=mx.nd.argsort(scores, is_ascend=False).asnumpy()[0]
+    #print candidates
+    #print candidates.shape
+    res=0.0
+    if ignore:
+        max_item-=len(ignore)
+    total=len(pos_items)*(max_item-len(pos_items))
+    hit=0.0
+    num_correct_pairs=0.0
+    for i in xrange(max_item):
+        if ignore and candidates in ignore:
+            continue
+        if candidates[i] in pos_items:
+            hit+=1
+        else:
+            num_correct_pairs+=hit
+    res=num_correct_pairs/total
+    return res
+    
+
+
+
+def train(data, user_pos,max_user,max_item, network, batch_size, num_epoch, learning_rate):
     network=mx.mod.Module(network, data_names=('user','pos_item', 'neg_item'),context=mx.gpu())
     network.bind(data_shapes=[('user',(batch_size,)),('pos_item', (batch_size,)), ('neg_item', (batch_size,))])
     init=mx.init.Xavier(factor_type='in', magnitude=1)
@@ -90,7 +118,21 @@ def train(data, network, batch_size, num_epoch, learning_rate):
         outputs=network.get_outputs()
         network.backward()
         logging.info("Iter:%d, Error:%f" %(i,outputs[0].asnumpy().sum()/(batch_size+0.0)))	
-#		for k, v, grad_v in zip(network._param_names, network._exec_group.param_arrays, network._exec_group.grad_arrays):
+        if i%50==0:
+            params=network.get_params()[0]
+            for x in params:
+                if x=='user_weight':
+                    user_params=params[x]
+                if x=='item_weight':
+                    item_params=params[x]
+            res=mx.nd.dot(user_params, item_params.T).asnumpy()
+        #    print res.shape
+            auc=0.0
+            for u in xrange(max_user):
+         #       print u
+                auc_u=cal_AUC(u,res[u,:],user_pos[u], max_item)
+                auc+=auc_u
+            print 'Iterations %d, AUC on training %f' %(i, auc/res.shape[0])
         network.update()
 
 
@@ -110,6 +152,8 @@ with open(data_file, 'r') as f:
         user_pos_item[user].add(pos_item)
 max_user=len(user_dict)
 max_item=len(item_dict)
+print '#User ', max_user
+print '#Item ', max_item
 for i in xrange(len(data)):
     u,p=data[i]
     n=random.choice(range(max_item))
@@ -122,5 +166,10 @@ num_epoch=2000
 batch_size=100
 learning_rate=0.01
 net=get_network(num_hidden, max_user, max_item)
-train(data, net, batch_size, num_epoch, learning_rate)
+train(data,user_pos_item, max_user, max_item, net, batch_size, num_epoch, learning_rate)
+
+
+
+
+
 
