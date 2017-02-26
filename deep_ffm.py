@@ -101,17 +101,18 @@ def deepffm(field_dim,num_hidden, num_layer):
         x.append(mx.sym.Variable('x_%d'%(i)))
     for i in xrange(num_field):
         w.append(mx.sym.Embedding(data=x[i], name='w_f%d'%i, input_dim=field_dim[i], output_dim=1))
+        #w[i]=mx.sym.Reshape(data=w[i], shape=())
         v.append(mx.sym.Embedding(data=x[i], name='v_eb_f%d_l%d'%(i,0), input_dim=field_dim[i], output_dim=num_hidden))
     for l in xrange(1,num_layer):
         for f in xrange(num_field):
             v[f]=mx.sym.FullyConnected(data=v[f], name='v_fc_f%d_l%d'%(f,l), num_hidden=num_hidden)
             v[f]=mx.sym.Activation(data=v[f],name='v_act_f%d_l%d'%(f,l), act_type='relu')
             v[f]=mx.sym.Dropout(data=v[f],p=0.2)
-    '''
-    wx=[wi*xi for wi,xi in zip(w,x)]
-    wx=mx.sym.ElementWiseSum(*wx)
+    
+    #wx=[wi*xi for wi,xi in zip(w,x)]
+    #wx=mx.sym.ElementWiseSum(*wx)
     ''' 
-    '''
+    
     #FFM all combine
     vsum=mx.sym.ElementWiseSum(*v)
     
@@ -122,7 +123,7 @@ def deepffm(field_dim,num_hidden, num_layer):
     '''
     res=[v[i]*v[j] for i,j in itertools.combinations(range(num_field),2)]
     res=mx.sym.ElementWiseSum(*res)
-
+    #res=res+wx
     res=mx.sym.Dropout(data=res, p=0.2) 
     #res=vsum
     #res=v[0]*v[1]
@@ -152,12 +153,12 @@ max_user=len(user_dict)
 max_item=len(item_dict)
 print '#user ',max_user
 print '#item ',max_item
-num_hidden=64
+num_hidden=50
 batch_size=50
 num_epoch=200
 learning_rate=0.01
 num_field=2
-num_layer=10
+num_layer=5
 field_dims=[max_user, max_item]
 net=deepffm(field_dims, num_hidden, num_layer)
 train(data, num_field, net, batch_size, num_epoch, learning_rate)
