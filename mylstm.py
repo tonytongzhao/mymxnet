@@ -3,7 +3,7 @@ import numpy as np
 from collections import namedtuple
 import time
 import math
-
+import custom_softmax
 LSTMState = namedtuple('LSTMState', ['c','h'])
 LSTMParam = namedtuple('LSTMParam',['i2h_weight', 'i2h_bias',
     'h2h_weight','h2h_bias'])
