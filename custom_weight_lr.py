@@ -49,7 +49,7 @@ class SparseLinear(mx.operator.CustomOp):
     def backward(self, req, out_grad, in_data, out_data, in_grad, aux):
         in_grad[1]=in_data[0]*out_grad[0]
         in_grad[2]=in_data[0]
-        in_grad[0]=in_data[0]
+        in_grad[0]=in_grad[0]+out_grad[0]
     #   in_grad[1]=in_data[0]*out_grad[0]#+mx.nd.broadcast_mul(mx.nd.array([self.sparse_reg]),self.sparse_reg*(in_data[0]>0))
 
 @mx.operator.register('sparse_linear')
