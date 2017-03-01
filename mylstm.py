@@ -4,6 +4,7 @@ from collections import namedtuple
 import time
 import math
 import custom_softmax
+from numpy_op_softmax import NumpySoftmax
 LSTMState = namedtuple('LSTMState', ['c','h'])
 LSTMParam = namedtuple('LSTMParam',['i2h_weight', 'i2h_bias',
     'h2h_weight','h2h_bias'])
@@ -71,7 +72,8 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
         if dropout:
             hidden=mx.sym.Dropout(data=hidden, p= dropout)
         fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-        sm = mx.sym.SoftmaxOutput(data=fc, label=mx.sym.Variable('label/%d'%seqidx), name='t%d_sm'%seqidx)
+        mynumpysoftmax=NumpySoftmax()
+        sm = mynumpysoftmax(data=fc, label=mx.sym.Variable('label/%d'%seqidx), name='t%d_sm'%seqidx)
         loss_all.append(sm)
     return mx.sym.Group(loss_all)
 
@@ -123,7 +125,7 @@ def lstm_inference_symbol(num_lstm_layer, input_size, num_hidden, num_embed, num
     if dropout:
         hidden=mx.sym.Dropout(data=hidden, p= dropout)
     fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-    sm = mx.sym.SoftmaxOutput(data=fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx)
+    sm = mx.sym.Custom(data=fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx, op_type='softmax')
     out=[sm]
     for state in last_states:
         out.append(state.c)

@@ -35,4 +35,4 @@ class SoftmaxProp(mx.operator.CustomOpProp):
 		return [data_shape, label_shape], [output_shape], []
 
 	def create_operator(self, ctx, shapes, dtypes):
-		reutrn Softmax()
+		return Softmax()
