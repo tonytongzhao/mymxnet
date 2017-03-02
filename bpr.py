@@ -3,6 +3,7 @@ import numpy as np
 import random
 import sys,logging
 import collections
+import custom_sparse_lr
 class Batch:
     def __init__(self, data_names, data, label_names, label):
         self.data_names=data_names
@@ -50,7 +51,7 @@ class DataIter(mx.io.DataIter):
     def reset(self):
         random.shuffle(self.data)
 
-def get_network(num_hidden, max_user, max_item):
+def get_network(num_hidden,num_layers, max_user, max_item):
     user=mx.sym.Variable('user')
     pos_item=mx.sym.Variable('pos_item')
     neg_item=mx.sym.Variable('neg_item')
@@ -58,10 +59,16 @@ def get_network(num_hidden, max_user, max_item):
     user_weight=mx.sym.Variable('user_weight')
     item_weight=mx.sym.Variable('item_weight')
     user=mx.sym.Embedding(data=user, input_dim=max_user, weight=user_weight, output_dim=num_hidden)
-
+    #user=mx.sym.Custom(data=user, dim=num_hidden, name='slr', op_type='splinear')
     pos_item=mx.sym.Embedding(data=pos_item, input_dim=max_item, weight=item_weight, output_dim=num_hidden)
     neg_item=mx.sym.Embedding(data=neg_item, input_dim=max_item, weight=item_weight, output_dim=num_hidden)
-
+    for i in xrange(num_layers-1):
+        user=mx.sym.FullyConnected(data=user, num_hidden=num_hidden)
+        #user=mx.sym.Custom(data=user, dim=num_hidden, name='slr', op_type='splinear')
+        pos_item=mx.sym.FullyConnected(data=pos_item, num_hidden=num_hidden)
+        pos_item=mx.sym.Activation(data=pos_item, act_type='relu')
+        neg_item=mx.sym.FullyConnected(data=neg_item, num_hidden=num_hidden)
+        neg_item=mx.sym.Activation(data=neg_item, act_type='relu')
     item_diff=neg_item-pos_item
     res=user*item_diff
     res=mx.sym.sum_axis(data=res, axis=1)
@@ -167,17 +174,19 @@ for i in xrange(len(data)):
         n=random.choice(range(max_item))
     data[i]=(u,p,n)
 
-num_hidden=64
+num_hidden=32
 num_epoch=2000
 batch_size=100
+num_layers=3
 learning_rate=0.01
 print '#hidden_factor\t',num_hidden
 print '#num_epoch\t', num_epoch
 print 'batch_size\t', batch_size
+print '#layers\t', num_layers
 print 'learning_rate\t', learning_rate
 print 'start training'
 
-net=get_network(num_hidden, max_user, max_item)
+net=get_network(num_hidden,num_layers, max_user, max_item)
 train(data,user_pos_item, max_user, max_item, net, batch_size, num_epoch, learning_rate)
 print '\n'
 

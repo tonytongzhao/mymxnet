@@ -1,5 +1,5 @@
 import mxnet as mx
-import recotools
+import rectools
 
 max_user = int(1e6)
 title_vocab = int(1e5)
@@ -14,7 +14,7 @@ def dssm_recommender(k):
     label = mx.symbol.Variable('label')
     
     # Process content stack
-    image = alexnet.features(image, 256)
+    image = recotools.SparseBagOfWordProjection(data=title, vocab_size=title_vocab, 
     title = recotools.SparseBagOfWordProjection(data=title, vocab_size=title_vocab, 
                                     output_dim=k)
     title = mx.symbol.FullyConnected(data=title, num_hidden=k)
