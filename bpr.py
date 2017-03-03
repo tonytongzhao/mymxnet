@@ -175,7 +175,7 @@ for i in xrange(len(data)):
     data[i]=(u,p,n)
 
 num_hidden=32
-num_epoch=2000
+num_epoch=5000
 batch_size=100
 num_layers=3
 learning_rate=0.01
