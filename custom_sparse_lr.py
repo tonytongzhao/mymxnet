@@ -4,23 +4,29 @@ import sys
 import os
 
 class SparseLinear(mx.operator.CustomOp):
-    def __init__(self, dim, sparse_reg):
-        self.sparse_reg=sparse_reg
+    def __init__(self, is_data, sparse_reg):
+        self.sparse_reg=float(sparse_reg)
         #self.weight=weight
+        self.is_data=int(is_data)
         self.dim=dim
 
     def forward(self, is_train, req, in_data, out_data, aux):
         self.assign(out_data[0], req[0], mx.nd.broadcast_mul(in_data[0], in_data[1]))
 
     def backward(self, req, out_grad, in_data, out_data, in_grad, aux):
-        in_grad[0][:]=mx.nd.zeros(in_data[0].shape)
-        in_grad[1][:]=mx.nd.sum_axis(in_data[0], axis=0)*mx.nd.sum_axis(out_grad[0],axis=0)/in_data[0].shape[0]+((in_data[1]>0)*2-1)*0.1
+        if self.is_data:
+            print 'in_grad[0] is zero'
+            in_grad[0][:]=mx.nd.zeros(in_data[0].shape)
+        else:
+            print 'in_grad[0] will be assigned here'
+            in_grad[0][:]=(in_data[1]*mx.nd.sum_axis(out_grad[0],axis=0)).broadcast_to(in_data[0].shape)
+        in_grad[1][:]=mx.nd.sum_axis(in_data[0], axis=0)*mx.nd.sum_axis(out_grad[0],axis=0)/in_data[0].shape[0]+((in_data[1]>0)*2-1)*self.sparse_reg
 @mx.operator.register('sparse_linear')
 
 class SparseLinearProp(mx.operator.CustomOpProp):
-    def __init__(self, dim, sparse_reg):
+    def __init__(self, is_data, sparse_reg):
         self.sparse_reg=sparse_reg
-        self.dim=dim
+        self.is_data=is_data
         super(SparseLinearProp, self).__init__( need_top_grad=True)
 
     def list_arguments(self):
@@ -34,7 +40,7 @@ class SparseLinearProp(mx.operator.CustomOpProp):
         return [shape,in_shape[1]], [shape]
 
     def create_operator(self, ctx, shape, dtypes):
-        return SparseLinear( self.dim, self.sparse_reg)
+        return SparseLinear( self.is_data, self.sparse_reg)
 
         
 
@@ -47,7 +53,7 @@ if __name__=='__main__':
         dim=(m*2,n)
         data=mx.sym.Variable('data')
         sl_weight=mx.sym.Variable('sl_weight')
-        sldata=mx.sym.Custom(data=data, weight=sl_weight, dim=dim, sparse_reg=0.01, name='sl', op_type='sparse_linear')
+        sldata=mx.sym.Custom(data=data, weight=sl_weight, is_data=0, sparse_reg=0.01, name='sl', op_type='sparse_linear')
         slr=mx.sym.FullyConnected(data=sldata, num_hidden=15, name='fc1')
         #data=mx.sym.FullyConnected(data=data, num_hidden=5)
         #wlr=mx.sym.Custom(data=slr, pos_grad_scale=pos, neg_grad_scale=neg, name='wlr', op_type='weighted_logistic_regression')
