@@ -6,7 +6,7 @@ import math
 import time
 
 
-LSMTState=namedtuple('LSTMState', ['c','h'])
+LSTMState=namedtuple('LSTMState', ['c','h'])
 LSTMParam=namedtuple('LSTMParam', ['i2h_weight', 'i2h_bias', 'h2h_weight', 'h2h_bias'])
 LSTMModel=namedtuple('LSTMModel', ['rnn_exec', 'symbol', 'init_states', 'last_states', 'seq_data', 'seq_labels', 'seq_outputs', 'param_blocks'])
 
@@ -16,7 +16,7 @@ def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
         indata=mx.sym.Dropout(data=indata, p=dropout)
 
     i2h=mx.sym.FullyConnected(data=indata, weight=param.i2h_weight, bias=param.i2h_bias, num_hidden=num_hidden*4, name='t%d_l%d_i2h'%(seqidx, layeridx))
-    h2h=mx.sym.FullyConnected(data=indata, weight=param.h2h_weight, bias=param.h2h_bias, num_hidden=num_hidden*4, name='t%d_l%d_h2h'%(seqidx, layeridx))
+    h2h=mx.sym.FullyConnected(data=prev_state.h, weight=param.h2h_weight, bias=param.h2h_bias, num_hidden=num_hidden*4, name='t%d_l%d_h2h'%(seqidx, layeridx))
     gates=i2h+h2h
 
     slice_gates=mx.sym.SliceChannel(gates, num_outputs=4, name='t%d_l%d_slice'%(seqidx, layeridx))
@@ -38,8 +38,8 @@ def encode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
     param_cells=[]
     last_states=[]
     for i in xrange(num_layer):
-        param_cells.append(LSTMParam(i2h_weight=mx.sym.Variable('l%d_i2h_weight'%(u)), i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), h2h_weight=mx.sym.Variable('l%d_h2h_weight'%i), h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
-        state=LSTMState(h=mx.sym.Variable('l%d_init_h'%i), c=mx.sym.Variable('l%d_init_c'%i))
+        param_cells.append(LSTMParam(i2h_weight=mx.sym.Variable('l%d_i2h_weight'%(i)), i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), h2h_weight=mx.sym.Variable('l%d_h2h_weight'%i), h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
+        state=LSTMState(c=mx.sym.Variable('l%d_init_c'%i), h=mx.sym.Variable('l%d_init_h'%i))
         last_states.append(state)
 
     data=mx.sym.Variable('data')
@@ -54,7 +54,7 @@ def encode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
             else:
                 dp_ratio=dropout
             next_state=lstm(num_hidden, hidden, prev_state=last_states[i], param=param_cells[i], seqidx=seqidx, layeridx=i, dropout=dp_ratio)
-            hidden=next_state
+            hidden=next_state.h
             last_states[i]=next_state
         if dropout:
             hidden=mx.sym.Dropout(data=hidden, p=dropout)
@@ -64,12 +64,14 @@ def encode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
     return hidden
 
 
-def decode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
+def decode_lstm_unroll(num_layer, seq_len, num_hidden, num_label, dropout=0., is_train=True):
     cls_weight=mx.sym.Variable('cls_weight')
     cls_bias=mx.sym.Variable('cls_bias')
+    param_cells=[]
+    last_states=[]
     for i in xrange(num_layer):
-        param_cells.append(LSTMParam(i2h_weight=mx.sym.Variable('l%d_i2h_weight'%(u)), i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), h2h_weight=mx.sym.Variable('l%d_h2h_weight'%i), h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
-        state=LSTMState(h=mx.sym.Variable('l%d_init_h'%i), c=mx.sym.Variable('l%d_init_c'%i))
+        param_cells.append(LSTMParam(i2h_weight=mx.sym.Variable('l%d_i2h_weight'%(i)), i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), h2h_weight=mx.sym.Variable('l%d_h2h_weight'%i), h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
+        state=LSTMState( c=mx.sym.Variable('l%d_init_c'%i),h=mx.sym.Variable('l%d_init_h'%i))
         last_states.append(state)
 
     data=mx.sym.Variable('data')
@@ -85,7 +87,7 @@ def decode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
             else:
                 dp_ratio=dropout
             next_state=lstm(num_hidden, hidden, prev_state=last_states[i], param=param_cells[i], seqidx=seqidx, layeridx=i, dropout=dp_ratio)
-            hidden=next_state
+            hidden=next_state.h
             last_states[i]=next_state
         if dropout:
             hidden=mx.sym.Dropout(data=hidden, p=dropout)
@@ -95,7 +97,6 @@ def decode_lstm_unroll(num_layer, seq_len, num_hidden, dropout=0.):
     pred=mx.sym.FullyConnected(data=hidden_concat, num_hidden=num_label, weight=cls_weight, bias=cls_bias, name='pred')
 
     label=mx.sym.transpose(data=label)
-    print label.shape
     label=mx.sym.Reshape(data=label, target_shape=(0,))
     sm=mx.sym.SoftmaxOutput(data=pred, label=label, name='softmax')
     return sm

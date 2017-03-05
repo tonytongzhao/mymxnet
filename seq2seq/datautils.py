@@ -86,7 +86,7 @@ def default_gen_buckets( len_dict, batch_size ):
 class Seq2SeqIter(mx.io.DataIter):
     def __init__( self, data_path, source_path, target_path, vocab, vocab_rsd, batch_size,
                   max_len, data_name='data', label_name='label', split_char='\n',
-                  text2id=None, read_content=None, model_parallel=False, ctx=mx.cpu() ):
+                  text2id=None, read_content=None, model_parallel=False, ctx=mx.gpu() ):
         super(Seq2SeqIter, self).__init__()
 
         self.ctx = ctx
@@ -213,7 +213,7 @@ class Seq2SeqIter(mx.io.DataIter):
                     'dec_batch_in': decin_batch,
                     'dec_batch_tr': dectr_batch
                 })
-        with open('./data/data.pickle', 'w') as f:
+        with open('/home/tzhao/Data/seq2seq/data.pickle', 'w') as f:
             print 'dumping data ...'
             pickle.dump(iter_data, f)
         return iter_data
@@ -244,8 +244,8 @@ class SimpleBatch(object):
 
 
 if __name__ == '__main__':
-    vocab, vocab_rsd = default_build_vocab('./data/vocab.txt')
-    data = Seq2SeqIter(data_path=None, source_path='./data/a.txt', target_path='./data/b.txt',
+    vocab, vocab_rsd = default_build_vocab('/home/tzhao/Data/seq2seq/vocab.txt')
+    data = Seq2SeqIter(data_path=None, source_path='/home/tzhao/Data/seq2seq/a.txt', target_path='/home/tzhao/Data/seq2seq/b.txt',
                        vocab=vocab, vocab_rsd=vocab_rsd, batch_size=10, max_len=25,
                        data_name='data', label_name='label', split_char='\n',
                        text2id=None, read_content=None, model_parallel=False)
