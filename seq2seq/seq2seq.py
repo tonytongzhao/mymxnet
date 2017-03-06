@@ -156,6 +156,10 @@ class seq2seq:
                 enc_in=mx.nd.array(batch['enc_batch_in'], self.ctx)
                 dec_in=mx.nd.array(batch['dec_batch_in'], self.ctx)
                 dec_tr=mx.nd.array(batch['dec_batch_tr'], self.ctx)
+                print 'Batch data'
+                print enc_in.shape
+                print dec_in.shape
+                print dec_tr.shape
                 cur_ppl=self.train_batch(enc_input_batch=enc_in, dec_input_batch=dec_in, dec_target_batch=dec_tr)
 
                 ppl+=cur_ppl

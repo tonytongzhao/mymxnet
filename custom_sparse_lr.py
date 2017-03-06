@@ -90,6 +90,6 @@ if __name__=='__main__':
             if epoch%100==0:
                 pred=mx.nd.argmax_channel(executor.outputs[0]).asnumpy()
                 print 'epoch %d, acc %f'%(epoch, (pred==y.flatten()).sum()/(batch_size+0.0))
-                print 'feature selection', args['sl_weight'].asnumpy()
+                print 'feature selection\n', args['sl_weight'].asnumpy()
 
         

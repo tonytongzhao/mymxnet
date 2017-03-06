@@ -77,7 +77,6 @@ def mf(max_user, max_item, num_hidden):
     score = mx.sym.Variable('score')
     user=mx.sym.Embedding(data=user, input_dim=max_user, output_dim= num_hidden)
     item=mx.sym.Embedding(data=item, input_dim=max_item, output_dim= num_hidden)
-
     pred=user*item
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)
@@ -102,9 +101,9 @@ with open(data_file, 'r') as f:
         tks=line.strip().split('\t')
         data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict))
 print len(user_dict), len(item_dict)
-num_hidden=10
+num_hidden=100
 batch_size=50
-num_epoch=200
+num_epoch=2000
 learning_rate=0.01
 net=mf(len(user_dict), len(item_dict), num_hidden)
 train(data, net, batch_size, num_epoch, learning_rate)
