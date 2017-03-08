@@ -71,7 +71,7 @@ if __name__=='__main__':
         args=dict(zip(wlr.list_arguments(), executor.arg_arrays))
         for r in executor.arg_arrays:
             r[:]=np.random.randn(*r.shape)*0.02
-        for epoch in xrange(1000):
+        for epoch in xrange(2):
             x,y=toy_data.get(batch_size)
             executor.arg_dict['data'][:]=mx.nd.array(x,ctx=mx.gpu())
             executor.arg_dict['wlr_label'][:]=mx.nd.array(y,ctx=mx.gpu()).reshape(args['wlr_label'].shape)
@@ -79,7 +79,7 @@ if __name__=='__main__':
 
             executor.forward(is_train=True)
             executor.backward()    
-            #print 'arguments', wlr.list_arguments()
+            print 'arguments', wlr.list_arguments()
             #print 'arg_arrays', [x for x in executor.arg_arrays]
             #print 'grad_arrays', [x.asnumpy() for x in executor.grad_arrays]
             for pname, w, grad in zip(wlr.list_arguments(), executor.arg_arrays, executor.grad_arrays):
