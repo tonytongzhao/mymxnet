@@ -34,13 +34,14 @@ def myGRU(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     next_h=prev_state.h+update_gate*(htrans_act-prev_state.h)
     return GRUState(h=next_h)
 
-def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, nupass, nipass, npass):
+def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, nupass, nipass, npass, dropout=0.):
+    last_states=[]
     param_cells=[]
     for i in xrange(num_layer):
         param_cells.append(GRUParam(gates_i2h_weight=mx.sym.Variable('l%d_i2h_gates_weight'%i), gates_i2h_bias=mx.sym.Variable('l%d_i2h_gates_bias'%i),gates_h2h_weight=mx.sym.Variable('l%d_h2h_gates_weight'%i),gates_h2h_bias=mx.sym.Variable('l%d_h2h_gates_bias'%i),trans_i2h_weight=mx.sym.Variable('l%d_i2h_trans_weight'%i), trans_i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), trans_h2h_weight=mx.sym.Variable('l%d_h2h_trans_weight'%i), trans_h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
         state=GRUState(h=mx.sym.Variable('l%d_init_h'%i))
-
-	user=mx.sym.Variable('user')
+        last_states.append(state)
+    user=mx.sym.Variable('user')
     item=mx.sym.Variable('item')
     rating=mx.sym.Variable('rating')
     grp_u=mx.sym.Variable('grp_u')
@@ -54,7 +55,6 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
 
     weight_z=mx.sym.Variable('z_weight')
     bias_z=mx.sym.Variable('z_bias')
-
     m_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     m_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
@@ -76,7 +76,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             c_u=mx.sym.broadcast_mul(grp_u, g)
             c_u=mx.sym.sum_axis(data=c_u, axis=1)
             mu_state=GRUState(h=m_u)
-            next_state=myGRU(num_embed, indata=cur_col_u, prev_state=mu_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=0.2)
+            next_state=myGRU(num_embed, indata=cur_col_u, prev_state=mu_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=dropout)
             m_u=next_state.h
 
 
@@ -93,7 +93,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             c_i=mx.sym.broadcast_mul(grp_i, g)
             c_i=mx.sym.sum_axis(data=c_i, axis=1)
             mi_state=GRUState(h=m_i)
-            next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=0.2)
+            next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=dropout)
             m_i=next_state.h
 
     pred=m_u*m_i
