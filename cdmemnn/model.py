@@ -39,7 +39,8 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     for i in xrange(num_layer):
         param_cells.append(GRUParam(gates_i2h_weight=mx.sym.Variable('l%d_i2h_gates_weight'%i), gates_i2h_bias=mx.sym.Variable('l%d_i2h_gates_bias'%i),gates_h2h_weight=mx.sym.Variable('l%d_h2h_gates_weight'%i),gates_h2h_bias=mx.sym.Variable('l%d_h2h_gates_bias'%i),trans_i2h_weight=mx.sym.Variable('l%d_i2h_trans_weight'%i), trans_i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), trans_h2h_weight=mx.sym.Variable('l%d_h2h_trans_weight'%i), trans_h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
         state=GRUState(h=mx.sym.Variable('l%d_init_h'%i))
-    user=mx.sym.Variable('user')
+
+	user=mx.sym.Variable('user')
     item=mx.sym.Variable('item')
     rating=mx.sym.Variable('rating')
     grp_u=mx.sym.Variable('grp_u')
@@ -51,8 +52,8 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     #weight_uu=mx.sym.Variable('aff_u', shape=(num_embed, num_embed), init=mx.initializer.Xavier(rnd_type='gaussian', factor_type='avg', magnitude=2))
     #weight_ii=mx.sym.Variable('aff_i', shape=(num_embed, num_embed), init=mx.initializer.Xavier(rnd_type='gaussian', factor_type='avg', magnitude=2))
 
-    weight_z=mx.sym.Variable('weight_z')
-    bias_z=mx.sym.Variable('bias_z')
+    weight_z=mx.sym.Variable('z_weight')
+    bias_z=mx.sym.Variable('z_bias')
 
     m_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     m_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
@@ -60,9 +61,8 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
-    col_u=mx.sym.SliceChannel(data=grp_u, num_outputs=nupass, squeeze_axis=1)
-    col_i=mx.sym.SliceChannel(data=grp_i, num_outputs=nipass, squeeze_axis=1)
-    
+    col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
+    col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
     for _ in xrange(npass):
         for i in xrange(nupass):
             cur_col_u=col_u[i]
@@ -96,7 +96,6 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=0.2)
             m_i=next_state.h
 
-   
     pred=m_u*m_i
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)

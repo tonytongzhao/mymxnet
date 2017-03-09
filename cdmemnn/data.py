@@ -28,8 +28,8 @@ class DataIter(mx.io.DataIter):
         self.data=data
         self.user2item=user2item
         self.item2user=item2user
-        self.provide_data=[('user',(self.batch_size,1)), ('item', (self.batch_size,1)), ('grp_u', (self.batch_size,upass)), ('grp_i', (self.batch_size,ipass)),]
-        self.provide_label = [('rating', (self.batch_size,1 )),]
+        self.provide_data=[('user',(self.batch_size,)), ('item', (self.batch_size,)), ('grp_u', (self.batch_size,upass)), ('grp_i', (self.batch_size,ipass)),]
+        self.provide_label = [('rating', (self.batch_size,)),]
 
     def __iter__(self):
         for k in xrange(len(self.data)/self.batch_size):
@@ -135,7 +135,7 @@ num_hidden=100
 batch_size=50
 num_epoch=2000
 learning_rate=0.01
-num_embed=50
+num_embed=150
 num_layer=1
 upass=15
 ipass=15
