@@ -74,7 +74,7 @@ def RMSE(label, pred):
 def get_data(data, batch_size, user2item, item2user, upass, ipass):
     return (DataIter(data, batch_size, user2item, item2user, upass, ipass), DataIter(data, batch_size, user2item, item2user, upass, ipass))
 
-def train(data, network, batch_size, num_epoch, user2item, item2user, learning_rate, upass, ipass):
+def train(data, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate):
     ''' 
     model=mx.model.FeedForward(ctx=mx.gpu(),symbol=network, num_epoch=num_epoch,learning_rate=learning_rate, wd=0.0001, momentum=0.9, initializer=mx.init.Normal(sigma=0.01))
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
@@ -89,7 +89,7 @@ def train(data, network, batch_size, num_epoch, user2item, item2user, learning_r
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
     logging.basicConfig(level=logging.DEBUG)
-    network.fit(train, eval_data=test, eval_metric=RMSE, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
+    network.fit(train, eval_data=test, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
@@ -157,7 +157,7 @@ if __name__=='__main__':
     ipass=int(args.ipass)
     npass=int(args.npass)
     net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
-    train(data, net, batch_size, num_epoch, learning_rate, user2item, item2user, upass, ipass)
+    train(data, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate)
 
 
 
