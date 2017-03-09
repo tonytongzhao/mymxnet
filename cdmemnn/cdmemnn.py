@@ -132,8 +132,8 @@ if __name__=='__main__':
     parser.add_argument('-npass', help='num of collaborative passes', dest='npass', default=10)
     parser.add_argument('-nlayer', help='num of GRU layers', dest='num_layer', default=1)
     parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
-	parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.5)
-	args=parser.parse_args()
+    parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.5)
+    args=parser.parse_args()
 
     user2item=collections.defaultdict(set)
     item2user=collections.defaultdict(set)
@@ -156,7 +156,7 @@ if __name__=='__main__':
     upass=int(args.upass)
     ipass=int(args.ipass)
     npass=int(args.npass)
-    net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass)
+    net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     train(data, net, batch_size, num_epoch, learning_rate, user2item, item2user, upass, ipass)
 
 

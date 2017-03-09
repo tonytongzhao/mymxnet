@@ -69,7 +69,9 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             q_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
             z=[cur_col_u, m_u, q_u, mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
             z=mx.sym.Concat(*z, dim=1)
-            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z)
+            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z, name='ufc1')
+            z=mx.sym.Activation(data=z, act_type='relu')
+            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ufc2')
             z=mx.sym.Activation(data=z, act_type='relu')
             z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
             g=mx.sym.SoftmaxActivation(data=z)
@@ -86,7 +88,9 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             q_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
             z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
             z=mx.sym.Concat(*z, dim=1)
-            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z)
+            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z, name='ifc1')
+            z=mx.sym.Activation(data=z, act_type='relu')
+            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ifc2')
             z=mx.sym.Activation(data=z, act_type='relu')
             z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
             g=mx.sym.SoftmaxActivation(data=z)
