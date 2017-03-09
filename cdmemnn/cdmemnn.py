@@ -3,6 +3,7 @@ import mxnet as mx
 import random
 import sys
 import logging
+import argparse
 import collections
 import model
 class Batch:
@@ -88,7 +89,7 @@ def train(data, network, batch_size, num_epoch, user2item, item2user, learning_r
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
     logging.basicConfig(level=logging.DEBUG)
-    network.fit(train, eval_data=test, eval_metric=RMSE, num_epoch=num_epoch)
+    network.fit(train, eval_data=test, eval_metric=RMSE, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
@@ -119,30 +120,43 @@ def convert_data(user, item, score, user_dict, item_dict, user2item, item2user):
     item2user[item].add(user)
     return (user, item, float(score))
 
-user2item=collections.defaultdict(set)
-item2user=collections.defaultdict(set)
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('-train', help='Data file', dest='fi', required=True)
+    parser.add_argument('-nhidden', help='num of hidden', dest='num_hidden', default=50)
+    parser.add_argument('-nembed', help='num of embedding', dest='num_embed', default=50)
+    parser.add_argument('-batch_size', help='batch size', dest='batch_size', default=100)
+    parser.add_argument('-nepoch', help='num of epoch', dest='num_epoch', default=200)
+    parser.add_argument('-upass', help='num of collaborative users', dest='upass', default=10)
+    parser.add_argument('-ipass', help='num of collaborative items', dest='ipass', default=10)
+    parser.add_argument('-npass', help='num of collaborative passes', dest='npass', default=10)
+    parser.add_argument('-nlayer', help='num of GRU layers', dest='num_layer', default=1)
+    parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
+    args=parser.parse_args()
 
-user_dict={}
-item_dict={}
-data_file=sys.argv[1]
-data=[]
-with open(data_file, 'r') as f:
-    for line in f:
-        tks=line.strip().split('\t')
-        data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user))
-print len(user_dict), len(item_dict)
-num_hidden=100
-batch_size=50
-num_epoch=2000
-learning_rate=0.01
-num_embed=150
-num_layer=1
-upass=15
-ipass=15
-npass=10
+    user2item=collections.defaultdict(set)
+    item2user=collections.defaultdict(set)
 
-net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass)
-train(data, net, batch_size, num_epoch, learning_rate, user2item, item2user, upass, ipass)
+    user_dict={}
+    item_dict={}
+    data=[]
+    with open(args.fi, 'r') as f:
+        for line in f:
+            tks=line.strip().split('\t')
+            data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user))
+    print '#Users, ',len(user_dict)
+    print '#Items, ',len(item_dict)
+    num_hidden=int(args.num_hidden)
+    batch_size=int(args.batch_size)
+    num_epoch=int(args.num_epoch)
+    learning_rate=float(args.learning_rate)
+    num_embed=int(args.num_embed)
+    num_layer=int(args.num_layer)
+    upass=int(args.upass)
+    ipass=int(args.ipass)
+    npass=int(args.npass)
+    net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass)
+    train(data, net, batch_size, num_epoch, learning_rate, user2item, item2user, upass, ipass)
 
 
 
