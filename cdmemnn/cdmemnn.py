@@ -132,7 +132,7 @@ if __name__=='__main__':
     parser.add_argument('-npass', help='num of collaborative passes', dest='npass', default=10)
     parser.add_argument('-nlayer', help='num of GRU layers', dest='num_layer', default=1)
     parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
-    parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.5)
+    parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
     args=parser.parse_args()
 
     user2item=collections.defaultdict(set)
