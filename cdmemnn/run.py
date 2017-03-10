@@ -1,11 +1,11 @@
 import os
 
 if __name__=='__main__':
-    eta=[0.2, 0.1,0.05,0.02,0.01]
-    upass=[1,5,10,20]
-    ipass=[1,5,10,20]
-    num_embed=[10,30,50,100,150,200]
-    num_hidden=[10,30,50,100,150,200]
+    eta=[0.2, 0.1, 0.01]
+    upass=[5]
+    ipass=[5]
+    num_embed=[100,200,500]
+    num_hidden=[100,200,500]
     for e in eta:
         for u in upass:
             for i in ipass:
