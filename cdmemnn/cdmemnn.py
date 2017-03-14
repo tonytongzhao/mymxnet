@@ -71,10 +71,13 @@ def RMSE(label, pred):
         n+=1.0
     return np.sqrt(ret/n)
 
-def get_data(data, batch_size, user2item, item2user, upass, ipass):
-    return (DataIter(data, batch_size, user2item, item2user, upass, ipass), DataIter(data, batch_size, user2item, item2user, upass, ipass))
+def get_data(data, split, batch_size, user2item, item2user, upass, ipass):
+    tr=random.sample(data, int(split*len(data)))
+    te=list(set(data)-set(tr))
 
-def train(data, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate):
+    return (DataIter(tr, batch_size, user2item, item2user, upass, ipass), DataIter(te, batch_size, user2item, item2user, upass, ipass))
+
+def train(data, split, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate):
     ''' 
     model=mx.model.FeedForward(ctx=mx.gpu(),symbol=network, num_epoch=num_epoch,learning_rate=learning_rate, wd=0.0001, momentum=0.9, initializer=mx.init.Normal(sigma=0.01))
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
@@ -87,7 +90,7 @@ def train(data, network, batch_size, num_epoch, user2item, item2user, upass, ipa
     #init=mx.init.Xavier(factor_type='in', magnitude=1)
     #network.init_params(initializer=init)
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
-    train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
+    train, test= get_data(data, split, batch_size, user2item, item2user,  upass, ipass)
     logging.basicConfig(level=logging.DEBUG)
     network.fit(train, eval_data=test, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
@@ -133,6 +136,7 @@ if __name__=='__main__':
     parser.add_argument('-nlayer', help='num of GRU layers', dest='num_layer', default=1)
     parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
     parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
+    parser.add_argument('-split',dest='split', help='train & test split ratio', default=0.9)
     args=parser.parse_args()
 
     user2item=collections.defaultdict(set)
@@ -147,6 +151,7 @@ if __name__=='__main__':
             data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user))
     print '#Users, ',len(user_dict)
     print '#Items, ',len(item_dict)
+    print '#Ratings, ', len(data)
     num_hidden=int(args.num_hidden)
     batch_size=int(args.batch_size)
     num_epoch=int(args.num_epoch)
@@ -156,8 +161,9 @@ if __name__=='__main__':
     upass=int(args.upass)
     ipass=int(args.ipass)
     npass=int(args.npass)
+    split=float(args.split)
     net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
-    train(data, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate)
+    train(data, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate)
 
 
 

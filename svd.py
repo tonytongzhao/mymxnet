@@ -74,14 +74,18 @@ def train(data, network, split, n, batch_size, num_epoch, learning_rate):
     model.fit(train,eval_data=test, eval_metric=RMSE, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
 
 def mf(max_user, max_item, num_hidden):
-    user=mx.sym.Variable('user')
-    item=mx.sym.Variable('item')
+    u=mx.sym.Variable('user')
+    i=mx.sym.Variable('item')
     score = mx.sym.Variable('score')
-    user=mx.sym.Embedding(data=user, input_dim=max_user, output_dim= num_hidden)
-    item=mx.sym.Embedding(data=item, input_dim=max_item, output_dim= num_hidden)
+    user=mx.sym.Embedding(data=u, input_dim=max_user, output_dim= num_hidden, name='user_embed')
+    item=mx.sym.Embedding(data=i, input_dim=max_item, output_dim= num_hidden, name='item_embed')
+    user_bias=mx.sym.Embedding(data=u, input_dim=max_user, name='embed_user_bias', output_dim=1)
+    item_bias=mx.sym.Embedding(data=i, input_dim=max_item, name='embed_item_bias', output_dim=1)
+
     pred=user*item
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)
+    pred=pred+mx.sym.Flatten(data=user_bias)+mx.sym.Flatten(data=item_bias)
     pred=mx.sym.LinearRegressionOutput(data=pred, label = score)
     return pred
 
