@@ -5,7 +5,7 @@ import sys
 import logging
 import argparse
 import collections
-import model
+import model,os
 class Batch:
     def __init__(self, data_names, data, label_names, label, pad=0):
         self.data=data
@@ -77,7 +77,7 @@ def get_data(data, split, batch_size, user2item, item2user, upass, ipass):
 
     return (DataIter(tr, batch_size, user2item, item2user, upass, ipass), DataIter(te, batch_size, user2item, item2user, upass, ipass))
 
-def train(data, split, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate):
+def train(data_path, data, split, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname):
     ''' 
     model=mx.model.FeedForward(ctx=mx.gpu(),symbol=network, num_epoch=num_epoch,learning_rate=learning_rate, wd=0.0001, momentum=0.9, initializer=mx.init.Normal(sigma=0.01))
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
@@ -91,7 +91,9 @@ def train(data, split, network, batch_size, num_epoch, user2item, item2user, upa
     #network.init_params(initializer=init)
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
     train, test= get_data(data, split, batch_size, user2item, item2user,  upass, ipass)
-    logging.basicConfig(level=logging.DEBUG)
+    logger=logging.getLogger(logname)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.FileHandler(os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn_result']), logname+'.log'),'w'))
     network.fit(train, eval_data=test, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
     for i in xrange(num_epoch):
@@ -163,7 +165,8 @@ if __name__=='__main__':
     npass=int(args.npass)
     split=float(args.split)
     net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
-    train(data, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate)
+    logname='upass_'+args.upass+'_ipass_'+args.ipass+"_embed_"+args.num_embed+'_hidden_'+args.num_hidden+'_split_'+str(args.split)
+    train(args.fi,data, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
 
 
