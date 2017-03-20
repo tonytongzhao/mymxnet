@@ -91,10 +91,9 @@ def train(args,data_path, data, split, network, batch_size, num_epoch, user2item
     #network.init_params(initializer=init)
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
     train, test= get_data(data, split, batch_size, user2item, item2user,  upass, ipass)
-    logger=logging.getLogger(logname)
-    logger.addHandler(logging.FileHandler(os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn_result']), logname+'.log')))
-    logger.setLevel(logging.DEBUG)
-    logger.info('start with arguments %s', args)
+    logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn_result']), logname+'.log'), level=logging.DEBUG)
+    #logging.basicConfig(filename='cdmemnn.log', level=logging.DEBUG)
+    logging.info('start with arguments %s', args)
     network.fit(train, eval_data=test, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
     for i in xrange(num_epoch):
