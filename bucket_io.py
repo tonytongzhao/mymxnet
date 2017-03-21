@@ -99,7 +99,6 @@ class BucketSentenceIter(mx.io.DataIter):
         self.data = [[] for _ in buckets]
 
         self.default_bucket_key = buckets[0]
-
         for sentence in sentences:
             sentence = self.text2id(sentence, vocab)
             if len(sentence) == 0:
@@ -110,7 +109,6 @@ class BucketSentenceIter(mx.io.DataIter):
                     break
             # we just ignore the sentence it is longer than the maximum
             # bucket size here
-
         # convert data into ndarrays for better speed during training
         data = [np.zeros((len(x), buckets[i])) for i, x in enumerate(self.data)]
         for i_bucket in range(len(self.buckets)):
@@ -154,7 +152,6 @@ class BucketSentenceIter(mx.io.DataIter):
         self.bucket_plan = bucket_plan
         self.bucket_idx_all = bucket_idx_all
         self.bucket_curr_idx = [0 for x in self.data]
-
         self.data_buffer = []
         self.label_buffer = []
         for i_bucket in range(len(self.data)):
@@ -185,7 +182,6 @@ class BucketSentenceIter(mx.io.DataIter):
                           for t in range(self.buckets[i_bucket])] + init_state_names
             label_names = ['%s/%d' % (self.label_name, t)
                            for t in range(self.buckets[i_bucket])]
-
             data_batch = SimpleBatch(data_names, data_all, label_names, label_all,
                                      self.buckets[i_bucket])
             yield data_batch
