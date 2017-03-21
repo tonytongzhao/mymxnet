@@ -1,0 +1,239 @@
+INFO:root:Start training with [gpu(0)]
+INFO:root:Epoch[0] Batch [400]	Speed: 870.51 samples/sec	Train-RMSE=3.628590
+INFO:root:Epoch[0] Batch [800]	Speed: 894.04 samples/sec	Train-RMSE=3.201608
+INFO:root:Epoch[0] Batch [1200]	Speed: 900.92 samples/sec	Train-RMSE=2.881496
+INFO:root:Epoch[0] Batch [1600]	Speed: 916.77 samples/sec	Train-RMSE=2.604036
+INFO:root:Epoch[0] Resetting Data Iterator
+INFO:root:Epoch[0] Time cost=103.548
+INFO:root:Epoch[0] Validation-RMSE=2.372165
+INFO:root:Epoch[1] Batch [400]	Speed: 882.14 samples/sec	Train-RMSE=2.277320
+INFO:root:Epoch[1] Batch [800]	Speed: 854.24 samples/sec	Train-RMSE=2.103008
+INFO:root:Epoch[1] Batch [1200]	Speed: 900.84 samples/sec	Train-RMSE=1.988737
+INFO:root:Epoch[1] Batch [1600]	Speed: 843.61 samples/sec	Train-RMSE=1.882556
+INFO:root:Epoch[1] Resetting Data Iterator
+INFO:root:Epoch[1] Time cost=103.508
+INFO:root:Epoch[1] Validation-RMSE=1.792169
+INFO:root:Epoch[2] Batch [400]	Speed: 934.60 samples/sec	Train-RMSE=1.723669
+INFO:root:Epoch[2] Batch [800]	Speed: 864.57 samples/sec	Train-RMSE=1.662888
+INFO:root:Epoch[2] Batch [1200]	Speed: 882.18 samples/sec	Train-RMSE=1.621874
+INFO:root:Epoch[2] Batch [1600]	Speed: 871.24 samples/sec	Train-RMSE=1.562008
+INFO:root:Epoch[2] Resetting Data Iterator
+INFO:root:Epoch[2] Time cost=102.323
+INFO:root:Epoch[2] Validation-RMSE=1.533737
+INFO:root:Epoch[3] Batch [400]	Speed: 811.35 samples/sec	Train-RMSE=1.486166
+INFO:root:Epoch[3] Batch [800]	Speed: 879.25 samples/sec	Train-RMSE=1.450940
+INFO:root:Epoch[3] Batch [1200]	Speed: 847.50 samples/sec	Train-RMSE=1.433648
+INFO:root:Epoch[3] Batch [1600]	Speed: 903.94 samples/sec	Train-RMSE=1.403455
+INFO:root:Epoch[3] Resetting Data Iterator
+INFO:root:Epoch[3] Time cost=104.283
+INFO:root:Epoch[3] Validation-RMSE=1.398378
+INFO:root:Epoch[4] Batch [400]	Speed: 881.56 samples/sec	Train-RMSE=1.353448
+INFO:root:Epoch[4] Batch [800]	Speed: 891.08 samples/sec	Train-RMSE=1.344506
+INFO:root:Epoch[4] Batch [1200]	Speed: 855.44 samples/sec	Train-RMSE=1.319125
+INFO:root:Epoch[4] Batch [1600]	Speed: 907.75 samples/sec	Train-RMSE=1.305941
+INFO:root:Epoch[4] Resetting Data Iterator
+INFO:root:Epoch[4] Time cost=101.875
+INFO:root:Epoch[4] Validation-RMSE=1.315414
+INFO:root:Epoch[5] Batch [400]	Speed: 856.77 samples/sec	Train-RMSE=1.268795
+INFO:root:Epoch[5] Batch [800]	Speed: 878.11 samples/sec	Train-RMSE=1.260701
+INFO:root:Epoch[5] Batch [1200]	Speed: 924.78 samples/sec	Train-RMSE=1.247240
+INFO:root:Epoch[5] Batch [1600]	Speed: 854.54 samples/sec	Train-RMSE=1.236433
+INFO:root:Epoch[5] Resetting Data Iterator
+INFO:root:Epoch[5] Time cost=103.483
+INFO:root:Epoch[5] Validation-RMSE=1.255828
+INFO:root:Epoch[6] Batch [400]	Speed: 880.57 samples/sec	Train-RMSE=1.230112
+INFO:root:Epoch[6] Batch [800]	Speed: 846.27 samples/sec	Train-RMSE=1.197571
+INFO:root:Epoch[6] Batch [1200]	Speed: 855.07 samples/sec	Train-RMSE=1.179862
+INFO:root:Epoch[6] Batch [1600]	Speed: 848.31 samples/sec	Train-RMSE=1.182597
+INFO:root:Epoch[6] Resetting Data Iterator
+INFO:root:Epoch[6] Time cost=105.176
+INFO:root:Epoch[6] Validation-RMSE=1.212940
+INFO:root:Epoch[7] Batch [400]	Speed: 844.02 samples/sec	Train-RMSE=1.170462
+INFO:root:Epoch[7] Batch [800]	Speed: 851.46 samples/sec	Train-RMSE=1.142953
+INFO:root:Epoch[7] Batch [1200]	Speed: 881.90 samples/sec	Train-RMSE=1.161318
+INFO:root:Epoch[7] Batch [1600]	Speed: 896.07 samples/sec	Train-RMSE=1.145706
+INFO:root:Epoch[7] Resetting Data Iterator
+INFO:root:Epoch[7] Time cost=104.471
+INFO:root:Epoch[7] Validation-RMSE=1.179690
+INFO:root:Epoch[8] Batch [400]	Speed: 911.58 samples/sec	Train-RMSE=1.129602
+INFO:root:Epoch[8] Batch [800]	Speed: 863.98 samples/sec	Train-RMSE=1.127806
+INFO:root:Epoch[8] Batch [1200]	Speed: 924.60 samples/sec	Train-RMSE=1.113674
+INFO:root:Epoch[8] Batch [1600]	Speed: 885.24 samples/sec	Train-RMSE=1.115950
+INFO:root:Epoch[8] Resetting Data Iterator
+INFO:root:Epoch[8] Time cost=99.148
+INFO:root:Epoch[8] Validation-RMSE=1.153094
+INFO:root:Epoch[9] Batch [400]	Speed: 946.68 samples/sec	Train-RMSE=1.099387
+INFO:root:Epoch[9] Batch [800]	Speed: 904.11 samples/sec	Train-RMSE=1.103901
+INFO:root:Epoch[9] Batch [1200]	Speed: 901.88 samples/sec	Train-RMSE=1.089343
+INFO:root:Epoch[9] Batch [1600]	Speed: 830.31 samples/sec	Train-RMSE=1.081704
+INFO:root:Epoch[9] Resetting Data Iterator
+INFO:root:Epoch[9] Time cost=100.422
+INFO:root:Epoch[9] Validation-RMSE=1.130870
+INFO:root:Epoch[10] Batch [400]	Speed: 879.40 samples/sec	Train-RMSE=1.076874
+INFO:root:Epoch[10] Batch [800]	Speed: 887.59 samples/sec	Train-RMSE=1.077204
+INFO:root:Epoch[10] Batch [1200]	Speed: 889.85 samples/sec	Train-RMSE=1.066187
+INFO:root:Epoch[10] Batch [1600]	Speed: 960.40 samples/sec	Train-RMSE=1.070589
+INFO:root:Epoch[10] Resetting Data Iterator
+INFO:root:Epoch[10] Time cost=98.608
+INFO:root:Epoch[10] Validation-RMSE=1.112674
+INFO:root:Epoch[11] Batch [400]	Speed: 962.15 samples/sec	Train-RMSE=1.063376
+INFO:root:Epoch[11] Batch [800]	Speed: 960.65 samples/sec	Train-RMSE=1.052974
+INFO:root:Epoch[11] Batch [1200]	Speed: 863.95 samples/sec	Train-RMSE=1.056397
+INFO:root:Epoch[11] Batch [1600]	Speed: 864.02 samples/sec	Train-RMSE=1.048353
+INFO:root:Epoch[11] Resetting Data Iterator
+INFO:root:Epoch[11] Time cost=99.648
+INFO:root:Epoch[11] Validation-RMSE=1.096656
+INFO:root:Epoch[12] Batch [400]	Speed: 933.43 samples/sec	Train-RMSE=1.036814
+INFO:root:Epoch[12] Batch [800]	Speed: 821.57 samples/sec	Train-RMSE=1.034418
+INFO:root:Epoch[12] Batch [1200]	Speed: 818.87 samples/sec	Train-RMSE=1.039546
+INFO:root:Epoch[12] Batch [1600]	Speed: 851.63 samples/sec	Train-RMSE=1.035198
+INFO:root:Epoch[12] Resetting Data Iterator
+INFO:root:Epoch[12] Time cost=105.566
+INFO:root:Epoch[12] Validation-RMSE=1.081576
+INFO:root:Epoch[13] Batch [400]	Speed: 898.81 samples/sec	Train-RMSE=1.031998
+INFO:root:Epoch[13] Batch [800]	Speed: 884.82 samples/sec	Train-RMSE=1.018678
+INFO:root:Epoch[13] Batch [1200]	Speed: 872.99 samples/sec	Train-RMSE=1.018593
+INFO:root:Epoch[13] Batch [1600]	Speed: 836.39 samples/sec	Train-RMSE=1.021665
+INFO:root:Epoch[13] Resetting Data Iterator
+INFO:root:Epoch[13] Time cost=103.355
+INFO:root:Epoch[13] Validation-RMSE=1.070862
+INFO:root:Epoch[14] Batch [400]	Speed: 922.37 samples/sec	Train-RMSE=1.004741
+INFO:root:Epoch[14] Batch [800]	Speed: 927.47 samples/sec	Train-RMSE=1.011839
+INFO:root:Epoch[14] Batch [1200]	Speed: 857.73 samples/sec	Train-RMSE=1.012150
+INFO:root:Epoch[14] Batch [1600]	Speed: 861.96 samples/sec	Train-RMSE=1.009092
+INFO:root:Epoch[14] Resetting Data Iterator
+INFO:root:Epoch[14] Time cost=101.241
+INFO:root:Epoch[14] Validation-RMSE=1.060875
+INFO:root:Epoch[15] Batch [400]	Speed: 861.83 samples/sec	Train-RMSE=1.001421
+INFO:root:Epoch[15] Batch [800]	Speed: 887.57 samples/sec	Train-RMSE=0.999431
+INFO:root:Epoch[15] Batch [1200]	Speed: 948.32 samples/sec	Train-RMSE=0.993743
+INFO:root:Epoch[15] Batch [1600]	Speed: 898.67 samples/sec	Train-RMSE=0.996099
+INFO:root:Epoch[15] Resetting Data Iterator
+INFO:root:Epoch[15] Time cost=100.788
+INFO:root:Epoch[15] Validation-RMSE=1.051287
+INFO:root:Epoch[16] Batch [400]	Speed: 899.53 samples/sec	Train-RMSE=0.987931
+INFO:root:Epoch[16] Batch [800]	Speed: 855.33 samples/sec	Train-RMSE=0.991363
+INFO:root:Epoch[16] Batch [1200]	Speed: 889.08 samples/sec	Train-RMSE=0.985881
+INFO:root:Epoch[16] Batch [1600]	Speed: 924.61 samples/sec	Train-RMSE=0.984638
+INFO:root:Epoch[16] Resetting Data Iterator
+INFO:root:Epoch[16] Time cost=101.291
+INFO:root:Epoch[16] Validation-RMSE=1.043191
+INFO:root:Epoch[17] Batch [400]	Speed: 932.42 samples/sec	Train-RMSE=0.980751
+INFO:root:Epoch[17] Batch [800]	Speed: 879.03 samples/sec	Train-RMSE=0.976160
+INFO:root:Epoch[17] Batch [1200]	Speed: 905.07 samples/sec	Train-RMSE=0.986955
+INFO:root:Epoch[17] Batch [1600]	Speed: 924.86 samples/sec	Train-RMSE=0.971021
+INFO:root:Epoch[17] Resetting Data Iterator
+INFO:root:Epoch[17] Time cost=99.411
+INFO:root:Epoch[17] Validation-RMSE=1.035941
+INFO:root:Epoch[18] Batch [400]	Speed: 897.77 samples/sec	Train-RMSE=0.973629
+INFO:root:Epoch[18] Batch [800]	Speed: 966.14 samples/sec	Train-RMSE=0.978163
+INFO:root:Epoch[18] Batch [1200]	Speed: 920.63 samples/sec	Train-RMSE=0.967802
+INFO:root:Epoch[18] Batch [1600]	Speed: 868.99 samples/sec	Train-RMSE=0.961179
+INFO:root:Epoch[18] Resetting Data Iterator
+INFO:root:Epoch[18] Time cost=98.229
+INFO:root:Epoch[18] Validation-RMSE=1.028475
+INFO:root:Epoch[19] Batch [400]	Speed: 903.82 samples/sec	Train-RMSE=0.969053
+INFO:root:Epoch[19] Batch [800]	Speed: 902.22 samples/sec	Train-RMSE=0.951201
+INFO:root:Epoch[19] Batch [1200]	Speed: 934.16 samples/sec	Train-RMSE=0.962832
+INFO:root:Epoch[19] Batch [1600]	Speed: 995.93 samples/sec	Train-RMSE=0.956681
+INFO:root:Epoch[19] Resetting Data Iterator
+INFO:root:Epoch[19] Time cost=97.741
+INFO:root:Epoch[19] Validation-RMSE=1.023235
+INFO:root:Epoch[20] Batch [400]	Speed: 907.60 samples/sec	Train-RMSE=0.960019
+INFO:root:Epoch[20] Batch [800]	Speed: 901.62 samples/sec	Train-RMSE=0.948608
+INFO:root:Epoch[20] Batch [1200]	Speed: 886.72 samples/sec	Train-RMSE=0.951058
+INFO:root:Epoch[20] Batch [1600]	Speed: 892.67 samples/sec	Train-RMSE=0.953702
+INFO:root:Epoch[20] Resetting Data Iterator
+INFO:root:Epoch[20] Time cost=99.590
+INFO:root:Epoch[20] Validation-RMSE=1.016967
+INFO:root:Epoch[21] Batch [400]	Speed: 956.32 samples/sec	Train-RMSE=0.939377
+INFO:root:Epoch[21] Batch [800]	Speed: 890.28 samples/sec	Train-RMSE=0.936670
+INFO:root:Epoch[21] Batch [1200]	Speed: 856.74 samples/sec	Train-RMSE=0.956600
+INFO:root:Epoch[21] Batch [1600]	Speed: 866.68 samples/sec	Train-RMSE=0.946321
+INFO:root:Epoch[21] Resetting Data Iterator
+INFO:root:Epoch[21] Time cost=101.624
+INFO:root:Epoch[21] Validation-RMSE=1.012872
+INFO:root:Epoch[22] Batch [400]	Speed: 933.11 samples/sec	Train-RMSE=0.943177
+INFO:root:Epoch[22] Batch [800]	Speed: 897.54 samples/sec	Train-RMSE=0.940409
+INFO:root:Epoch[22] Batch [1200]	Speed: 922.14 samples/sec	Train-RMSE=0.936382
+INFO:root:Epoch[22] Batch [1600]	Speed: 970.69 samples/sec	Train-RMSE=0.938548
+INFO:root:Epoch[22] Resetting Data Iterator
+INFO:root:Epoch[22] Time cost=97.308
+INFO:root:Epoch[22] Validation-RMSE=1.007386
+INFO:root:Epoch[23] Batch [400]	Speed: 867.12 samples/sec	Train-RMSE=0.932549
+INFO:root:Epoch[23] Batch [800]	Speed: 894.36 samples/sec	Train-RMSE=0.932273
+INFO:root:Epoch[23] Batch [1200]	Speed: 913.86 samples/sec	Train-RMSE=0.935935
+INFO:root:Epoch[23] Batch [1600]	Speed: 848.88 samples/sec	Train-RMSE=0.926658
+INFO:root:Epoch[23] Resetting Data Iterator
+INFO:root:Epoch[23] Time cost=101.338
+INFO:root:Epoch[23] Validation-RMSE=1.003079
+INFO:root:Epoch[24] Batch [400]	Speed: 926.77 samples/sec	Train-RMSE=0.926930
+INFO:root:Epoch[24] Batch [800]	Speed: 873.64 samples/sec	Train-RMSE=0.926306
+INFO:root:Epoch[24] Batch [1200]	Speed: 930.41 samples/sec	Train-RMSE=0.931039
+INFO:root:Epoch[24] Batch [1600]	Speed: 987.98 samples/sec	Train-RMSE=0.920456
+INFO:root:Epoch[24] Resetting Data Iterator
+INFO:root:Epoch[24] Time cost=97.246
+INFO:root:Epoch[24] Validation-RMSE=0.999493
+INFO:root:Epoch[25] Batch [400]	Speed: 903.04 samples/sec	Train-RMSE=0.919852
+INFO:root:Epoch[25] Batch [800]	Speed: 959.76 samples/sec	Train-RMSE=0.914123
+INFO:root:Epoch[25] Batch [1200]	Speed: 944.99 samples/sec	Train-RMSE=0.918822
+INFO:root:Epoch[25] Batch [1600]	Speed: 917.71 samples/sec	Train-RMSE=0.923725
+INFO:root:Epoch[25] Resetting Data Iterator
+INFO:root:Epoch[25] Time cost=97.136
+INFO:root:Epoch[25] Validation-RMSE=0.994691
+INFO:root:Epoch[26] Batch [400]	Speed: 952.13 samples/sec	Train-RMSE=0.912294
+INFO:root:Epoch[26] Batch [800]	Speed: 934.64 samples/sec	Train-RMSE=0.916027
+INFO:root:Epoch[26] Batch [1200]	Speed: 869.42 samples/sec	Train-RMSE=0.917556
+INFO:root:Epoch[26] Batch [1600]	Speed: 833.93 samples/sec	Train-RMSE=0.918590
+INFO:root:Epoch[26] Resetting Data Iterator
+INFO:root:Epoch[26] Time cost=101.356
+INFO:root:Epoch[26] Validation-RMSE=0.990173
+INFO:root:Epoch[27] Batch [400]	Speed: 874.09 samples/sec	Train-RMSE=0.902929
+INFO:root:Epoch[27] Batch [800]	Speed: 885.94 samples/sec	Train-RMSE=0.911852
+INFO:root:Epoch[27] Batch [1200]	Speed: 903.69 samples/sec	Train-RMSE=0.914154
+INFO:root:Epoch[27] Batch [1600]	Speed: 938.17 samples/sec	Train-RMSE=0.906624
+INFO:root:Epoch[27] Resetting Data Iterator
+INFO:root:Epoch[27] Time cost=100.466
+INFO:root:Epoch[27] Validation-RMSE=0.987794
+INFO:root:Epoch[28] Batch [400]	Speed: 906.38 samples/sec	Train-RMSE=0.900540
+INFO:root:Epoch[28] Batch [800]	Speed: 933.35 samples/sec	Train-RMSE=0.898717
+INFO:root:Epoch[28] Batch [1200]	Speed: 910.61 samples/sec	Train-RMSE=0.902933
+INFO:root:Epoch[28] Batch [1600]	Speed: 916.25 samples/sec	Train-RMSE=0.908842
+INFO:root:Epoch[28] Resetting Data Iterator
+INFO:root:Epoch[28] Time cost=98.744
+INFO:root:Epoch[28] Validation-RMSE=0.984913
+INFO:root:Epoch[29] Batch [400]	Speed: 848.15 samples/sec	Train-RMSE=0.896117
+INFO:root:Epoch[29] Batch [800]	Speed: 904.46 samples/sec	Train-RMSE=0.893163
+INFO:root:Epoch[29] Batch [1200]	Speed: 921.14 samples/sec	Train-RMSE=0.901409
+INFO:root:Epoch[29] Batch [1600]	Speed: 939.43 samples/sec	Train-RMSE=0.900965
+INFO:root:Epoch[29] Resetting Data Iterator
+INFO:root:Epoch[29] Time cost=99.861
+INFO:root:Epoch[29] Validation-RMSE=0.981871
+INFO:root:Epoch[30] Batch [400]	Speed: 917.70 samples/sec	Train-RMSE=0.887399
+INFO:root:Epoch[30] Batch [800]	Speed: 867.00 samples/sec	Train-RMSE=0.899271
+INFO:root:Epoch[30] Batch [1200]	Speed: 860.62 samples/sec	Train-RMSE=0.888514
+INFO:root:Epoch[30] Batch [1600]	Speed: 931.86 samples/sec	Train-RMSE=0.894988
+INFO:root:Epoch[30] Resetting Data Iterator
+INFO:root:Epoch[30] Time cost=101.502
+INFO:root:Epoch[30] Validation-RMSE=0.979126
+INFO:root:Epoch[31] Batch [400]	Speed: 825.78 samples/sec	Train-RMSE=0.886507
+INFO:root:Epoch[31] Batch [800]	Speed: 876.72 samples/sec	Train-RMSE=0.884933
+INFO:root:Epoch[31] Batch [1200]	Speed: 850.17 samples/sec	Train-RMSE=0.892373
+INFO:root:Epoch[31] Batch [1600]	Speed: 886.72 samples/sec	Train-RMSE=0.882517
+INFO:root:Epoch[31] Resetting Data Iterator
+INFO:root:Epoch[31] Time cost=105.192
+INFO:root:Epoch[31] Validation-RMSE=0.975648
+INFO:root:Epoch[32] Batch [400]	Speed: 854.71 samples/sec	Train-RMSE=0.883984
+INFO:root:Epoch[32] Batch [800]	Speed: 903.88 samples/sec	Train-RMSE=0.876545
+INFO:root:Epoch[32] Batch [1200]	Speed: 926.20 samples/sec	Train-RMSE=0.887128
+INFO:root:Epoch[32] Batch [1600]	Speed: 919.78 samples/sec	Train-RMSE=0.884813
+INFO:root:Epoch[32] Resetting Data Iterator
+INFO:root:Epoch[32] Time cost=100.045
+INFO:root:Epoch[32] Validation-RMSE=0.973341
+INFO:root:Epoch[33] Batch [400]	Speed: 987.17 samples/sec	Train-RMSE=0.873514
+INFO:root:Epoch[33] Batch [800]	Speed: 958.87 samples/sec	Train-RMSE=0.875862
+INFO:root:Epoch[33] Batch [1200]	Speed: 865.87 samples/sec	Train-RMSE=0.879996
+INFO:root:Epoch[33] Batch [1600]	Speed: 864.10 samples/sec	Train-RMSE=0.878332
+INFO:root:Epoch[33] Resetting Data Iterator
+INFO:root:Epoch[33] Time cost=99.019
+INFO:root:Epoch[33] Validation-RMSE=0.971526

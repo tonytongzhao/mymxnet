@@ -70,7 +70,7 @@ def train(data, network, split, n, batch_size, num_epoch, learning_rate):
     train, test= get_data(data, split, n,  batch_size)
 #    model.bind(data_shapes=train.provide_data, label_shapes=train.provide_label)
  #   model.init_params()
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(filename='mf.log', level=logging.DEBUG)
     model.fit(train,eval_data=test, eval_metric=RMSE, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
 
 def mf(max_user, max_item, num_hidden):
