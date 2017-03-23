@@ -2,8 +2,8 @@ import mxnet as mx
 import os, urllib, zipfile
 import mylstm
 import numpy as np
-import bucket_io
-from my_lstm_inference import LSTMInferenceModel
+from variable_bucket import BucketFlexIter 
+from bi_lstm import bi_lstm_unroll
 import random
 #if not os.path.exists('char_lstm.zip'):
 #	urllib.urlretrieve('http://data.mxnet.io/data/char_lstm.zip', 'char_lstm.zip')
