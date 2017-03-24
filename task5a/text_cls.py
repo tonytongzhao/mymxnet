@@ -9,7 +9,7 @@ import random, string
 from utils import read_content, load_data, text2id
 import numpy as np
 def accuracy(label, pred):
-    return np.sum(label==np.round(pred))/(0.0+np.sum(label))
+    return np.sum(label*np.round(pred))/(0.0+np.sum(label))
 
 def Perplexity(label, pred):
     loss=0.
