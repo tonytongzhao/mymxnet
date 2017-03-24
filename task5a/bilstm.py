@@ -24,9 +24,7 @@ def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
 
 
 
-def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label, dropout=0., layeridx=0):
-    embed_weight=mx.sym.Variable('embed_weight')
-    
+def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label, dropout=0., layeridx=0): 
     last_states=[]
     last_states.append(LSTMState(c=mx.sym.Variable('lf%d_init_c'%layeridx), h=mx.sym.Variable('lf%d_init_h')))
     last_states.append(LSTMState(c=mx.sym.Variable('lb%d_init_c'%layeridx), h=mx.sym.Variable('lb%d_init_h'%layeridx)))

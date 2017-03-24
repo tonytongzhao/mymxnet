@@ -1,13 +1,12 @@
 import mxnet as mx
 import os, urllib, zipfile
-import mylstm
+import lstm,gru
 import numpy as np
 from variable_bucket import BucketFlexIter 
-from bi_lstm import bi_lstm_unroll
+from bilstm import bi_lstm_unroll
 import argparse
 import random, string
-import jason
-from utils import read_content, build_vocab, text2id
+from utils import read_content, load_data, text2id
 
 
 
@@ -17,18 +16,27 @@ def Perplexity(label, pred):
         loss+=-np.log(max(1e-10, pred[i][int(label[i])]))
     return np.exp(loss/label.size)
 
-def MakeRevertVocab(vocab):
-	dic={}
-	for k, v in vocab.items():
-		dic[v]=k
-	return dic
-
+def get_data_iter(ins, labels, batch_size, buckets, split):
+    num_ins=len(ins)
+    tr=random.sample(range(num_ins), int(split)*num_ins)
+    te=list(set(range(num_ins))-set(tr))
+    return BucketFlexIter(ins[tr], labels[tr], batch_size, buckets), BucketFlexIter(ins[te], labels[te], batch_size, buckets) 
 
 def train(path, df, nhidden, nembed, batch_size, epoch, model, nlayer, eta, dropout, split):
-    assert model in ['lstm', 'bilstm', 'gru']
+    data=read_content(os.path.join(path, df))
+    ins, labels, vocab, label_dict= load_data(data)
+    print '#ins', len(ins)
+    print '#labels', len(label_dict)
+    print '#words', len(vocab)
     buckets=[10,50,100,150,200]
-     
+    tr_data, val_data=get_data_iter(ins, labels, batch_size, buckets, split)
     
+    assert model in ['lstm', 'bilstm', 'gru']
+    if model =='lstm':
+        init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_states = init_c + init_h
+         
 
 
 

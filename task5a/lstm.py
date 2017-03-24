@@ -3,8 +3,6 @@ import numpy as np
 from collections import namedtuple
 import time
 import math
-import custom_softmax
-from numpy_op_softmax import NumpySoftmax
 LSTMState = namedtuple('LSTMState', ['c','h'])
 LSTMParam = namedtuple('LSTMParam',['i2h_weight', 'i2h_bias',
     'h2h_weight','h2h_bias'])
@@ -54,11 +52,12 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
 
     assert(len(last_states)==num_lstm_layer)
 
+    data=mx.sym.Variable('data')
+    hds=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=input_size, output_dim=num_embed)
+    w2v=mx.sym.SliceChannel(data=hds,num_outputs=seq_len, squeeze_axis=1)
     loss_all=[]
     for seqidx in xrange(seq_len):
-        data=mx.sym.Variable('data/%d'%seqidx)
-        hidden=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=input_size, output_dim=num_embed,name='t%d_embed'%(seqidx))
-        
+        hidden=w2v[seqidx]
         #Deep LSTM
         for i in xrange(num_lstm_layer):
             if i==0:
@@ -68,14 +67,17 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
             next_state=lstm(num_hidden, indata=hidden, prev_state=last_states[i],param=param_cells[i],seqidx=seqidx, layeridx=i, dropout=dp_ratio)
             hidden=next_state.h
             last_states[i]=next_state
-
         if dropout:
             hidden=mx.sym.Dropout(data=hidden, p= dropout)
-        fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-        mynumpysoftmax=NumpySoftmax()
-        sm = mynumpysoftmax(data=fc, label=mx.sym.Variable('label/%d'%seqidx), name='t%d_sm'%seqidx)
-        loss_all.append(sm)
-    return mx.sym.Group(loss_all)
+	    loss_all.append(hidden)
+
+    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
+    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'))    
+		#mynumpysoftmax=NumpySoftmax()
+		#sm = mynumpysoftmax(data=fc, label=mx.sym.Variable('label/%d'%seqidx), name='t%d_sm'%seqidx)
+        #loss_all.append(sm)
+    return loss 
+	#return mx.sym.Group(loss_all)
 
 
 

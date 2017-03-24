@@ -4,7 +4,6 @@ from collections import namedtuple
 
 GRUState=namedtuple('GRUState', ['h'])
 GRUParam=namedtuple('GRUParam', ['gates_i2h_weight','gates_i2h_bias', 'gates_h2h_weight', 'gates_h2h_bias','trans_i2h_weight','trans_i2h_bias', 'trans_h2h_weight', 'trans_h2h_bias'])
-GRUModel
 
 
 def myGRU(num_hidden, indata, prev_state, param, seqinx, layeridx, dropout=0.):
@@ -68,15 +67,16 @@ def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num
 
 
     #If seq2seq learning
-    hidden_concat=mx.sym.Concat(*hidden_all, dim=0)
+	'''
+	hidden_concat=mx.sym.Concat(*hidden_all, dim=0)
     pred=mx.sym.FullyConnected(data=hidden_concat, num_hidden=num_label)
     label=mx.sym.Transpose(data=label)
     label=mx.sym.Reshape(data=label, target_shape=(0,))
-    
+    '''
     #If one final output
-    #pred=mx.sym.FullyConnected(data=hidden, num_hidden=num_label)
-
-    loss=mx.sym.SoftmaxOutput(data=pred, label=label)
+    pred=mx.sym.FullyConnected(data=hidden, num_hidden=num_label)
+	
+    loss=mx.sym.LogisticRegressionOutput(data=pred, label=label)
     return loss
 
 
