@@ -42,3 +42,6 @@ def load_data(data):
 def text2id(sentence, vocab):
     words=list(sentence)
     return [vocab[w] for w in words if len(w)]
+
+def accuracy(label, pred):
+    return len(label==pred)/(0.0+len(pred))
