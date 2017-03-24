@@ -81,4 +81,5 @@ def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num
 
 
 
-
+if __name__=='__main__':
+    print 'To be tested'

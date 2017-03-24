@@ -58,3 +58,5 @@ def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label,
     
 
 
+if __name__=='__main__':
+    print 'To be tested'

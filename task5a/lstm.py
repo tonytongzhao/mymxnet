@@ -136,6 +136,8 @@ def lstm_inference_symbol(num_lstm_layer, input_size, num_hidden, num_embed, num
 
 
 
+if __name__=='__main__':
+    print 'To be tested'
 
 
 
