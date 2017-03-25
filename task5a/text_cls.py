@@ -28,7 +28,7 @@ def Perplexity(label, pred):
 
 def get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split):
     num_ins=len(ins)
-    tr=random.sample(range(num_ins), int(split)*num_ins)
+    tr=random.sample(range(num_ins), int(split*num_ins))
     te=list(set(range(num_ins))-set(tr))
     return BucketFlexIter(ins[tr], labels[tr], nlabels, batch_size, init_states, buckets), BucketFlexIter(ins[te], labels[te], nlabels, batch_size, init_states, buckets) 
 
@@ -41,7 +41,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
     contexts=[mx.context.gpu(i) for i in xrange(1)]   
     nwords=len(vocab)
     nlabels=len(label_dict)
-    buckets=[10,50,100,150,200]
+    buckets=[50, 100,200, 300, 500, 800, 1000]
     logging.basicConfig(level=logging.DEBUG)
     assert model in ['lstm', 'bilstm', 'gru']
     if model =='lstm':
@@ -59,8 +59,19 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric='rmse',batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':0.01, 'momentum': 0.9, 'wd': 0.00001})
-                                                                    
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':0.01, 'momentum': 0.9, 'wd': 0.00001})
+        ''' 
+        mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
+        init=mx.init.Xavier(factor_type='in', magnitude=2.34)
+        mod.init_params(initializer=init)
+        mod.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4})
+        for e in xrange(nepoch):
+            mod.forward(data_batch=tr_data.next(), is_train=True)
+            outputs=mod.get_outputs()
+            print 'output', outputs.asnumpy()
+            mod.backward()
+            mod.update()
+        '''
 
 
 

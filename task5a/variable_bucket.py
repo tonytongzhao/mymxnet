@@ -36,7 +36,7 @@ class BucketFlexIter(mx.io.DataIter):
 	self.label_size=label_size
         self.major_axis=0
         self.init_states = init_states
-        self.init_state_arrays = [mx.nd.zeros(x[1]) for x in init_states]
+        self.init_state_arrays = [mx.nd.normal(shape=x[1]) for x in init_states]
         self.state_name=[x[1] for x in init_states]
         if self.major_axis==0:
             self.provide_data=[(data_name, (batch_size, self.default_bucket_key))] +self.init_states
@@ -45,6 +45,7 @@ class BucketFlexIter(mx.io.DataIter):
         for i, buck in enumerate(self.data):
             self.idx.extend([(i,j) for j in xrange(0, len(buck)-batch_size+1, batch_size)])
         self.curr_idx=0
+        
         self.reset()
 
     def reset(self):
@@ -60,6 +61,7 @@ class BucketFlexIter(mx.io.DataIter):
 
     def next(self):
         if self.curr_idx==len(self.idx):
+            #self.curr_idx=0
             raise StopIteration
         i,j=self.idx[self.curr_idx]
         self.curr_idx+=1
