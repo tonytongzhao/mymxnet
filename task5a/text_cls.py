@@ -59,7 +59,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':0.01, 'momentum': 0.9, 'wd': 0.00001})
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         ''' 
         mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
         init=mx.init.Xavier(factor_type='in', magnitude=2.34)
@@ -72,9 +72,23 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
             mod.backward()
             mod.update()
         '''
+    elif model=='gru':
+        init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_states = init_h
+	state_names=[x[0] for x in init_states]
 
-
-
+        tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split)
+	def gru_gen(seq_len):
+            sym=gru.my_GRU_unroll(nlayer, seq_len, nwords, nhidden, nembed, nlabels, dropout)
+	    data_names=['data']+state_names
+	    label_names=['label']
+	    return sym, data_names, label_names
+	if len(buckets) == 1:
+	    mod = mx.mod.Module(*gru_gen(buckets[0]), context=contexts)
+        else:
+	    mod = mx.mod.BucketingModule(gru_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()

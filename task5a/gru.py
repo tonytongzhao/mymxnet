@@ -6,7 +6,7 @@ GRUState=namedtuple('GRUState', ['h'])
 GRUParam=namedtuple('GRUParam', ['gates_i2h_weight','gates_i2h_bias', 'gates_h2h_weight', 'gates_h2h_bias','trans_i2h_weight','trans_i2h_bias', 'trans_h2h_weight', 'trans_h2h_bias'])
 
 
-def myGRU(num_hidden, indata, prev_state, param, seqinx, layeridx, dropout=0.):
+def myGRU(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     if dropout>0.:
         indata=mx.sym.Dropout(data=indata, p=dropout)
 
@@ -36,6 +36,8 @@ def myGRU(num_hidden, indata, prev_state, param, seqinx, layeridx, dropout=0.):
 def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num_label, dropout=0.):
     seqidx=0
     embed_weight=mx.sym.Variable('embed_weight')
+    cls_weight=mx.sym.Variable('cls_weight')
+    cls_bias=mx.sym.Variable('cls_bias')
     param_cells=[]
     last_states=[]
     
@@ -74,9 +76,10 @@ def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num
     label=mx.sym.Reshape(data=label, target_shape=(0,))
     '''
     #If one final output
-    pred=mx.sym.FullyConnected(data=hidden, num_hidden=num_label)
+    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
+    fc=mx.sym.Activation(data=fc, act_type='relu')
+    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'))    
 	
-    loss=mx.sym.LogisticRegressionOutput(data=pred, label=label)
     return loss
 
 
