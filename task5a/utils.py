@@ -2,6 +2,7 @@ import json
 import collections
 import sys, io
 from nltk.corpus import stopwords
+import numpy as np
 from nltk.tokenize import RegexpTokenizer
 def read_content(path):
     json_data=open(path, 'r').read().decode('utf8', 'ignore').strip()
@@ -37,7 +38,7 @@ def load_data(data):
                     ins_feature.append(vocab[w])
         features.append(ins_feature)
         labels.append(ins_label)
-    return features, labels, vocab, label_dict
+    return np.array(features), np.array(labels), vocab, label_dict
 
 def text2id(sentence, vocab):
     words=list(sentence)
