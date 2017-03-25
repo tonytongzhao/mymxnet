@@ -1,6 +1,6 @@
 import mxnet as mx
 import os, urllib, zipfile
-import lstm,gru
+import lstm,gru, ffn
 import numpy as np
 from variable_bucket import BucketFlexIter 
 from bilstm import bi_lstm_unroll
@@ -33,6 +33,7 @@ def get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split)
     return BucketFlexIter(ins[tr], labels[tr], nlabels, batch_size, init_states, buckets), BucketFlexIter(ins[te], labels[te], nlabels, batch_size, init_states, buckets) 
 
 def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split):
+    assert model in ['ffn', 'lstm', 'bilstm', 'gru']
     data=read_content(os.path.join(path, df))
     ins, labels, vocab, label_dict= load_data(data)
     print '#ins', len(ins)
@@ -43,8 +44,20 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
     nlabels=len(label_dict)
     buckets=[50, 100,200, 300, 500, 800, 1000]
     logging.basicConfig(level=logging.DEBUG)
-    assert model in ['lstm', 'bilstm', 'gru']
-    if model =='lstm':
+    if model=='ffn':
+        tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+	def ffn_gen(seq_len):
+            sym=ffn.ffn(nlayer, seq_len, nwords, nhidden, nembed, nlabels, dropout)
+	    data_names=['data']
+	    label_names=['label']
+	    return sym, data_names, label_names
+	if len(buckets) == 1:
+	    mod = mx.mod.Module(*ffn_gen(buckets[0]), context=contexts)
+        else:
+	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        
+    elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_c + init_h
@@ -102,7 +115,7 @@ if __name__=='__main__':
     parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
     parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
     parser.add_argument('-split',dest='split', help='train & validation split ratio', default=0.9)
-    parser.add_argument('-model', dest='model', help='model module: lstm, bilstm, gru', required=True)
+    parser.add_argument('-model', dest='model', help='model module: ffn, lstm, bilstm, gru', required=True)
     args=parser.parse_args()
     path=args.path
     df=args.fi
