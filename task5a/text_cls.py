@@ -10,7 +10,15 @@ from utils import read_content, load_data, text2id
 import numpy as np
 import logging
 def accuracy(label, pred):
-    return np.sum(label*np.round(pred))/(0.0+np.sum(label))
+    '''
+    print 'hi'
+    print label[0][:100]
+    print np.round(pred[0][:100])
+    print sum(label[0][:100])
+    print sum(np.round(pred[0][:100]))
+    print sum(np.multiply(label[0][:100],np.round(pred[0][:100])))
+    '''
+    return np.sum(np.multiply(label,np.round(pred)))/np.sum(label)
 
 def Perplexity(label, pred):
     loss=0.
@@ -51,7 +59,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch,eval_metric=mx.metric.np(accuracy),batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':0.01, 'momentum': 0.9, 'wd': 0.00001})
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric='rmse',batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':0.01, 'momentum': 0.9, 'wd': 0.00001})
                                                                     
 
 

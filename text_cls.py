@@ -4,26 +4,20 @@ import mylstm
 import numpy as np
 from variable_bucket import BucketFlexIter 
 from bi_lstm import bi_lstm_unroll
-import random
-#if not os.path.exists('char_lstm.zip'):
-#	urllib.urlretrieve('http://data.mxnet.io/data/char_lstm.zip', 'char_lstm.zip')
-#with zipfile.ZipFile('char_lstm.zip', 'r') as f:
-#	f.extractall('./')
+import argparse
+import random, string
+import jason
 
 
 def read_content(path):
-	with open(path) as ins:
-		return ins.read()
+    with open(path) as f:
+        data=json.load(f)
+    return data
 
-def build_vocab(path):
-	content=list(read_content(path))
-	idx=1
-	vocab={}
-	for w in content:
-		if len(w) and w not in vocab:
-			vocab[w]=idx
-			idx+=1
-	return vocab
+def build_vocab(data):
+    vocab={}
+    idx=1
+    
 
 def text2id(sentence, vocab):
     words=list(sentence)
@@ -42,96 +36,52 @@ def MakeRevertVocab(vocab):
 		dic[v]=k
 	return dic
 
-def MakeInput(char, vocab, arr):
-	idx=vocab[char]
-	tmp=np.zeros((1,))
-	tmp[0]=idx
-	arr[:]=tmp
 
-
-def _cdf(weights):
-	total=sum(weights)
-	result=[]
-	cusum=0
-	for w in weights:
-		cusum+=w
-		result.append(cusum/total)
-	return result
-
-def _choice(population, weights):
-	cdf_vals=_cdf(weights)
-	x=random.random()
-	idx=bisec.bisec(cdf_vals,x)
-	return population[idx]
-
-
-def MakeOutput(prob, vocab, sample=False, temperature=1.):
-	if not sample:
-		idx=np.argmax(prob, axis=1)[0]
-	else:
-		idx=np.random.choice(range(len(prob)))
-
-	try:
-		char=vocab[idx]
-	except:
-		char=''
-	return char
+def train(path, df, nhidden, nembed, batch_size, epoch, model, nlayer, eta, dropout, split):
+    assert model in ['lstm', 'bilstm', 'gru']
+    buckets=[10,50,100,150,200]
+     
+    
 
 
 
-vocab=build_vocab('./mldata/obama.txt')
-
-seq_len=129
-num_embed=256
-num_lstm_layer=3
-num_hidden=512
 
 
-symbol=mylstm.lstm_unroll(num_lstm_layer, seq_len, len(vocab)+1, num_hidden=num_hidden, num_embed=num_embed, num_label=len(vocab)+1, dropout=0.2)
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('-path', help='data path', dest='path', required=True)
+    parser.add_argument('-file', help='data file', dest='fi', required=True)
+    parser.add_argument('-nhidden', help='num of hidden', dest='num_hidden', default=50)
+    parser.add_argument('-nembed', help='num of embedding', dest='num_embed', default=50)
+    parser.add_argument('-batch_size', help='batch size', dest='batch_size', default=100)
+    parser.add_argument('-nepoch', help='num of epoch', dest='num_epoch', default=200)
+    parser.add_argument('-nlayer', help='num of GRU layers', dest='num_layer', default=1)
+    parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
+    parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
+    parser.add_argument('-split',dest='split', help='train & validation split ratio', default=0.9)
+    parser.add_argument('-model', dest='model', help='model module: lstm, bilstm, gru', required=True)
+    args=parser.parse_args()
+    path=args.path
+    df=args.fi
+    nhidden=int(args.num_hidden)
+    nembed=int(args.num_embed)
+    batch_size=int(args.batch_size)
+    epoch=int(args.num_epoch)
+    model=args.model
+    nlayer=int(args.num_layer)
+    eta=float(args.learning_rate)
+    dropout=float(args.dropout)
+    split=float(args.split)
+
+    train(path, df, nhidden, nembed, batch_size, epoch, model, nlayer, eta, dropout, split)
+    
 
 
-batch_size=32
-
-init_c=[('l%d_init_c'%l, (batch_size, num_hidden)) for l in xrange(num_lstm_layer)]
-init_h=[('l%d_init_h'%l, (batch_size, num_hidden)) for l in xrange(num_lstm_layer)]
-init_states=init_c+init_h
-data_train=bucket_io.BucketSentenceIter('./mldata/obama.txt', vocab, [seq_len],batch_size, init_states, seperate_char='\n', text2id=text2id, read_content=read_content)
-
-num_epoch=100
-learning_rate=0.01
-import logging
-model=mx.model.FeedForward(ctx=mx.gpu(0),symbol=symbol, num_epoch=num_epoch, learning_rate=learning_rate, momentum=0,wd=0.0001, initializer=mx.init.Xavier(factor_type='in',magnitude=2.34))
-#model=mx.mod.Module(ctx=mx.gpu(0),symbol=symbol, initializer=mx.init.Xavier(factor_type='in', magnitude=2.34))
-logging.basicConfig(level=logging.DEBUG)
-model.fit(X=data_train, eval_metric=mx.metric.np(Perplexity),batch_end_callback=mx.callback.Speedometer(batch_size,50),epoch_end_callback=mx.callback.do_checkpoint('obama'))
-
-_,arg_params,__=mx.model.load_checkpoint('obama',100)
-
-model=LSTMInferenceModel(num_lstm_layer, len(vocab)+1, num_hidden=num_hidden, num_embed=num_embed,num_label=len(vocab)+1, arg_params=arg_params, ctx=mx.gpu(), dropout=0.2)
 
 
-seq_length=600
-input_ndarray=mx.nd.zeros((1,))
-revert_vocab=MakeRevertVocab(vocab)
-output='The United States'
-print output
-random_sample=False
-new_sentence=True
 
-ignore_length=len(output)
 
-for i in xrange(seq_length):
-	if i<=ignore_length-1:
-		MakeInput(output[i], vocab, input_ndarray)
-	else:
-		MakeInput(output[-1], vocab, input_ndarray)
 
-	prob=model.forward(input_ndarray,new_sentence)
-	new_sentence=False
-	next_char=MakeOutput(prob,revert_vocab,random_sample)
-	if next_char=='':
-		new_sentence=True
-	if i>=ignore_length-1:
-		output+=next_char
-print output
+
+
 

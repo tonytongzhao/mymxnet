@@ -6,7 +6,7 @@ import sys
 LSTMState=namedtuple('LSTMState', ['c', 'h'])
 LSTMParam=namedtuple('LSTMParam', ['i2h_weight', 'i2h_bias', 'h2h_weight', 'h2h_bias'])
 
-def lstm(num_hidden. indata, prev_state, param, seqidx, layeridx, dropout=0.):
+def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     if dropout:
         indata=mx.sym.Dropout(data=indata, p=dropout)
     i2h=mx.sym.FullyConnected(data=indata, num_hidden=num_hidden*4, weight=param.i2h_weight, bias=param.i2h_bias, name='t%d_l%d_i2h'%(seqidx, layeridx))
@@ -53,7 +53,7 @@ def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label,
     
     hidden_all=[]
     for i in xrange(seq_len):
-        hidden_all.append(mx.sym.FullyConnected(data=mx.sym.Concat(*[forward_hidden[i], backward_hidden[i]] dim=1), num_hidden=num_hidden,weight=mx.sym.Variable('l%d_out_weight'%layeridx),bias=mx.sym.Variable('l%d_out_bias'%layeridx)))
+        hidden_all.append(mx.sym.FullyConnected(data=mx.sym.Concat(*[forward_hidden[i], backward_hidden[i]],dim=1), num_hidden=num_hidden,weight=mx.sym.Variable('l%d_out_weight'%layeridx),bias=mx.sym.Variable('l%d_out_bias'%layeridx)))
     return hidden_all
     
 

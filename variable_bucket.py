@@ -11,19 +11,18 @@ class BucketFlexIter(mx.io.DataIter):
 
         ndiscard=0
         self.data=[[] for _ in buckets]
-         
-        for i, sent in enumerate(data):
+		self.label=[[] for _ in buckets]
+		for i, sent in enumerate(data):
             buck=bisect.bisect_left(buckets, len(sent))
             if buck==len(buckets):
                 ndiscard+=1
                 continue
-            buff=np.full((buckets[buck],) invalid_label, dtype=dtype)
+            buff=np.full((buckets[buck],), invalid_label, dtype=dtype)
             buff[:len(sent)]=sent
-            self.data[buck].append(buff+[label[i]])
-
+            self.data[buck].append(buff)
+			self.label[buck].append(label[i])
         self.data=[np.asarray(i, dtype=dtype) for i in self.data]
         
-        self.label=label
         self.batch_size=batch_size
         self.buckets=buckets
         self.data_name=data_name
@@ -33,11 +32,12 @@ class BucketFlexIter(mx.io.DataIter):
         self.nddata=[]
         self.ndlabel=[]
         self.default_bucket_key=max(buckets)
-        
+		self.label_size=len(label[0]) 
         self.major_axis=0
 
         if self.major_axis==0:
             self.provide_data=[(data_name, (batch_size, self.default_bucket_key))]
+			self.provide_label=[(label_name,(batch_size, self.label_size)]
         self.idx=[]
         for i, buck in enumerate(self.data):
             self.idx.extend([(i,j) for j in xrange(0, len(buck)-batch_size+1, batch_size)])
@@ -51,11 +51,9 @@ class BucketFlexIter(mx.io.DataIter):
             np.random.shuffle(buck)
         self.nddata=[]
         self.ndlabel=[]
-        for buck in self.data:
-            label=np.empty_like(buck[:,0])
-            label[:,0]=buck[:,-1]
-            self.nddata.append(np.array(buck[:,:-1])) 
-            self.ndlabel.append(np.array(label))
+        for i, buck in enumerate(self.data):
+            self.nddata.append(np.array(buck)) 
+            self.ndlabel.append(np.array(self.label[i]))
 
     def next(self):
         if self.curr_idx==len(self.idx):
