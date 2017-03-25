@@ -21,7 +21,7 @@ class BucketFlexIter(mx.io.DataIter):
             buff[:len(sent)]=sent
             self.data[buck].append(buff)
             c=np.zeros(label_size)
-            c[label[i]]=1
+            c[label[i]]=10
             self.label[buck].append(c)
         self.data=[np.asarray(i, dtype=dtype) for i in self.data] 
         self.batch_size=batch_size
