@@ -55,7 +55,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*ffn_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=['rmse', accuracy],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -72,7 +72,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=['rmse',accuracy],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         ''' 
         mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
         init=mx.init.Xavier(factor_type='in', magnitude=2.34)
@@ -100,7 +100,7 @@ def train(path, df, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dro
 	    mod = mx.mod.Module(*gru_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(gru_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=accuracy,batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, eval_metric=['rmse', accuracy], batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
 
 if __name__=='__main__':
