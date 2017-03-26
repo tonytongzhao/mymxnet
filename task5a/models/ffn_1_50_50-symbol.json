@@ -12,7 +12,7 @@
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding4", 
+      "name": "embedding3", 
       "attr": {
         "input_dim": "80963", 
         "output_dim": "50"
@@ -21,14 +21,14 @@
     }, 
     {
       "op": "sum", 
-      "name": "sum_axis4", 
+      "name": "sum_axis3", 
       "attr": {"axis": "1"}, 
       "inputs": [[2, 0, 0]]
     }, 
     {
       "op": "_div_scalar", 
-      "name": "_divscalar4", 
-      "attr": {"scalar": "500"}, 
+      "name": "_divscalar3", 
+      "attr": {"scalar": "300"}, 
       "inputs": [[3, 0, 0]]
     }, 
     {
@@ -67,7 +67,7 @@
     }, 
     {
       "op": "FullyConnected", 
-      "name": "fullyconnected4", 
+      "name": "fullyconnected3", 
       "attr": {"num_hidden": "12635"}, 
       "inputs": [[8, 0, 0], [9, 0, 0], [10, 0, 0]]
     }, 
@@ -78,7 +78,7 @@
     }, 
     {
       "op": "LogisticRegressionOutput", 
-      "name": "logisticregressionoutput4", 
+      "name": "logisticregressionoutput3", 
       "inputs": [[11, 0, 0], [12, 0, 0]]
     }
   ], 
