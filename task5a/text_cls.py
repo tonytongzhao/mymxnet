@@ -1,5 +1,5 @@
 import mxnet as mx
-import os, urllib, zipfile
+import os, urllib, zipfile, json
 import lstm,gru, ffn
 import numpy as np
 from variable_bucket import BucketFlexIter 
@@ -33,7 +33,7 @@ def get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split)
     te=list(set(range(num_ins))-set(tr))
     return BucketFlexIter(ins[tr], labels[tr], nlabels, batch_size, init_states, buckets), BucketFlexIter(ins[te], labels[te], nlabels, batch_size, init_states, buckets) 
 
-def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split):
+def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train):
     assert model in ['ffn', 'lstm', 'bilstm', 'gru']
     data=read_content(os.path.join(path, df))
     ins, labels, pmids, vocab, label_dict, label_rev_dict = load_data(data)
@@ -71,7 +71,7 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
         init_states = init_c + init_h
 	state_names=[x[0] for x in init_states]
 	if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
         else:
             tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
             vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
@@ -103,7 +103,7 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
         init_states = init_h
 	state_names=[x[0] for x in init_states]
         if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
         else:
             tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
             vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
@@ -118,16 +118,16 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
         else:
 	    mod = mx.mod.BucketingModule(gru_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
         mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('models/'+prefix, period=10), eval_metric=['rmse', accuracy],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
-    return vocab, label_dict, label_rev_dict, prefix, buckets
+    return vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map
 
-def predict(te, vocab ,label_dict, label_rev_dict, prefix, buckets, model, nhidden, nlayer, dropout):
+def predict(te, vocab ,label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout):
     # Prediction for testing data set
     tins, tlabels, tpmids, t,tld,tlrd=load_data(read_content(te), vocab, label_dict, label_rev_dict, tr=False)	
     res={}
     res["documents"]=[]
-    param_file = "models/%s-0010.params" % prefix
-    arg_param,aux_param=load_param(param_file)    
-    make_predict(res, tins, len(label_dict), tpmids, model, param_file, buckets, nhidden, nlayer, vocab, dropout)
+    param_file = "models/%s" % prefix
+    #arg_param,aux_param=load_param(param_file)    
+    make_predict(res, tins, len(label_dict), tpmids, model, param_file, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map)
     return res
 
 def load_param(param_path):
@@ -144,7 +144,7 @@ def load_param(param_path):
     print(aux_param)
     return arg_param, aux_param
 
-def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets, nhidden, nlayer, vocab, dropout):
+def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map, nepoch):
     batch_size = 50
     dummy_labels=[0 for _ in xrange(len(test_data))]
     if model=='lstm': 
@@ -153,7 +153,7 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
         init_states = init_c + init_h
         test_iter=BucketFlexIter(test_data, dummy_labels, nlabels, batch_size, init_states, buckets)
         def lstm_gen(seq_len):
-            sym=lstm.lstm_unroll(nlayer, seq_len, len(vocab), nhidden, nembed, len(set(test_pmid)), dropout)
+            sym=lstm.lstm_unroll(nlayer, seq_len, len(vocab), nhidden, nembed, nlabels, dropout)
 	    data_names=['data']+state_names
 	    label_names=['label']
 	    return sym, data_names, label_names
@@ -162,7 +162,7 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
     elif model=='ffn': 
         test_iter=BucketFlexIter(test_data, dummy_labels, nlabels, batch_size, [], buckets)
         def ffn_gen(seq_len):
-            sym=ffn.ffn(nlayer, seq_len, len(vocab), nhidden, nembed, len(set(test_pmid)), dropout)
+            sym=ffn.ffn(nlayer, seq_len, len(vocab), nhidden, nembed, nlabels, dropout)
 	    data_names=['data']
 	    label_names=['label']
 	    return sym, data_names, label_names
@@ -171,22 +171,38 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
         init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_h
 	state_names=[x[0] for x in init_states]
-	
         test_iter=BucketFlexIter(test_data, dummy_labels, nlabels, batch_size, init_states, buckets)
         def gru_gen(seq_len):
-            sym=gru.my_GRU_unroll(nlayer, seq_len, len(vocab), nhidden, nembed, len(set(test_pmid)), dropout)
+            sym=gru.my_GRU_unroll(nlayer, seq_len, len(vocab), nhidden, nembed, nlabels, dropout)
 	    data_names=['data']+state_names
 	    label_names=['label']
 	    return sym, data_names, label_names
         module = mx.mod.BucketingModule(ffn_gen, default_bucket_key=test_iter.default_bucket_key)
     module.bind(data_shapes=test_iter.provide_data, label_shapes=None, for_training=False)
-    arg_params, aux_params=load_param(param_path)
+    #arg_params, aux_params=load_param(param_path)
+    sym, arg_params, aux_params = mx.model.load_checkpoint(param_path, nepoch)
     module.set_params(arg_params=arg_params, aux_params=aux_params)
-    
+    unique={}
     for preds, i_batch, batch in module.iter_predict(test_iter):
         label = batch.label[0].asnumpy().astype('int32')
         posteriors = preds[0].asnumpy().astype('float32')
-        print label.shape, posteriors.shape
+        idx=batch.index
+        i,j=test_iter.idx[idx]
+        batch_ids=test_iter.batch2id[i][j:j+batch_size]
+        pmids=test_pmid[batch_ids]
+        for p in pmids:
+            if p in unique:
+                print 'error'
+                break
+            unique[p]=1
+        pred=(posteriors>0.5)
+        ntest=pred.shape[0]
+        for insidx in xrange(ntest):
+            ins_dict={}
+            ins_dict["pmid"]=pmids[insidx]
+            ins_dict["labels"]=[mesh_map[label_rev_dict[k]] for k in xrange(nlabels) if pred[insidx,k]]
+            #print len(ins_dict["labels"])
+            res["documents"].append(ins_dict)
     return res
 
 if __name__=='__main__':
@@ -205,6 +221,7 @@ if __name__=='__main__':
     parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
     parser.add_argument('-split',dest='split', help='train & validation split ratio', default=0.9)
     parser.add_argument('-model', dest='model', help='model module: ffn, lstm, bilstm, gru', required=True)
+    parser.add_argument('-is_train', dest='is_train', default=1)
     args=parser.parse_args()
     path=args.path
     df=args.fi
@@ -214,16 +231,19 @@ if __name__=='__main__':
     nhidden=int(args.num_hidden)
     nembed=int(args.num_embed)
     batch_size=int(args.batch_size)
-    epoch=int(args.num_epoch)
+    nepoch=int(args.num_epoch)
     model=args.model
     nlayer=int(args.num_layer)
     eta=float(args.learning_rate)
     dropout=float(args.dropout)
     split=float(args.split)
-
-    vocab, label_dict, label_rev_dict, prefix, buckets=train(path, df, val, te, mesh_map, nhidden, nembed, batch_size, epoch, model, nlayer, eta, dropout, split)
+    is_train=int(args.is_train)
+    vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map = train(path, df, val, te, mesh_map, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train)
     print 'Prediction begins...'
-    res=predict(te, vocab, label_dict, label_rev_dict, prefix, buckets, model, nhidden, nlayer, dropout)
+    res=predict(te, vocab, label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout, nepoch)
+    print 'Writing results...'    
+    with open('pred/'+te.split('/')[-1].split('.json')[0]+"_"+prefix+'.json', 'w') as outfile:
+        json.dump(res, outfile)
 
 
 

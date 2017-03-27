@@ -8,10 +8,10 @@ class BucketFlexIter(mx.io.DataIter):
         if not buckets:
             buckets=[i for i, j in enumerate(np.bincount([len(s) for s in data])) if j>=batch_size]
         buckets.sort()
-
         ndiscard=0
         self.data=[[] for _ in buckets]
 	self.label=[[] for _ in buckets]
+        self.batch2id=[[] for _ in buckets]
 	for i, sent in enumerate(data):
             buck=bisect.bisect_left(buckets, len(sent))
             if buck==len(buckets):
@@ -23,6 +23,7 @@ class BucketFlexIter(mx.io.DataIter):
             c=np.zeros(label_size)
             c[label[i]]=1
             self.label[buck].append(c)
+            self.batch2id[buck].append(i)
         self.data=[np.asarray(i, dtype=dtype) for i in self.data] 
         self.batch_size=batch_size
         self.buckets=buckets
@@ -64,9 +65,8 @@ class BucketFlexIter(mx.io.DataIter):
             #self.curr_idx=0
             raise StopIteration
         i,j=self.idx[self.curr_idx]
-        self.curr_idx+=1
-        
+        self.curr_idx+=1 
         data=self.nddata[i][j:j+self.batch_size]
         label=self.ndlabel[i][j:j+self.batch_size]
-        return mx.io.DataBatch([mx.nd.array(data)], [mx.nd.array(label)], pad=0, bucket_key=self.buckets[i], provide_data=[(self.data_name, data.shape)]+self.init_states, provide_label=[(self.label_name, label.shape)])
+        return mx.io.DataBatch([mx.nd.array(data)], [mx.nd.array(label)], pad=0, index=self.curr_idx-1, bucket_key=self.buckets[i], provide_data=[(self.data_name, data.shape)]+self.init_states, provide_label=[(self.label_name, label.shape)])
 

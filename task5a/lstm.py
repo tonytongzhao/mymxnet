@@ -53,8 +53,8 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
     assert(len(last_states)==num_lstm_layer)
 
     data=mx.sym.Variable('data')
-    hds=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=input_size, output_dim=num_embed)
-    w2v=mx.sym.SliceChannel(data=hds,num_outputs=seq_len, squeeze_axis=1)
+    hds=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=input_size, output_dim=num_embed, name='w2v_embed')
+    w2v=mx.sym.SliceChannel(data=hds,num_outputs=seq_len, squeeze_axis=1, name='w2v_slice')
     loss_all=[]
     for seqidx in xrange(seq_len):
         hidden=w2v[seqidx]
@@ -68,10 +68,10 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
             hidden=next_state.h
             last_states[i]=next_state
         if dropout:
-            hidden=mx.sym.Dropout(data=hidden, p=dropout)
+            hidden=mx.sym.Dropout(data=hidden, p=dropout, name='dropout%d'%(seqidx))
 	    loss_all.append(hidden)
-    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'))    
+    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label, name='cls_lstm_fc')
+    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'), name='lstm_sm')    
     return loss 
 	#return mx.sym.Group(loss_all)
 
@@ -121,8 +121,8 @@ def lstm_inference_symbol(num_lstm_layer, input_size, num_hidden, num_embed, num
         last_states[i]=next_state
 
     if dropout:
-        hidden=mx.sym.Dropout(data=hidden, p= dropout)
-    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
+        hidden=mx.sym.Dropout(data=hidden, p= dropout, name='dropout')
+    fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label, name='lstm_cls_fc')
     sm = mx.sym.Custom(data=fc, label=mx.sym.Variable('label%d'%seqidx), name='t%d_sm'%seqidx, op_type='softmax')
     out=[sm]
     for state in last_states:

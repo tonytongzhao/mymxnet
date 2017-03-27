@@ -12,7 +12,7 @@
     }, 
     {
       "op": "Embedding", 
-      "name": "embedding1", 
+      "name": "ffn_embed", 
       "attr": {
         "input_dim": "80963", 
         "output_dim": "50"
@@ -67,7 +67,7 @@
     }, 
     {
       "op": "FullyConnected", 
-      "name": "fullyconnected1", 
+      "name": "ffn_cls", 
       "attr": {"num_hidden": "12635"}, 
       "inputs": [[8, 0, 0], [9, 0, 0], [10, 0, 0]]
     }, 
