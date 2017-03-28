@@ -56,7 +56,7 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
         if val==None:
             tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
         else:
-            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
+            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
             vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
             val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
         def ffn_gen(seq_len):
@@ -68,7 +68,8 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
 	    mod = mx.mod.Module(*ffn_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        if is_train:
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -90,7 +91,8 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
 	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        if is_train:
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         ''' 
         mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
         init=mx.init.Xavier(factor_type='in', magnitude=2.34)
@@ -122,17 +124,57 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
 	    mod = mx.mod.Module(*gru_gen(buckets[0]), context=contexts)
         else:
 	    mod = mx.mod.BucketingModule(gru_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        if is_train:
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=20), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+    
+    elif model=='bilstm':
+        init_cf = [('lf%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_cb = [('lb%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_hf = [('lf%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_hb = [('lb%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_states = init_cf + init_hf + init_cb + init_hb
+	state_names=[x[0] for x in init_states]
+        if val==None:
+            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
+        else:
+            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
+            vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
+            val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, init_states, buckets)
+	def bilstm_gen(seq_len):
+            data=mx.sym.Variable('data')
+            embed_weight=mx.sym.Variable('embed_weight')
+            concat_weight=mx.sym.Variable('concat_weight')
+            hds=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=nwords, output_dim=nembed, name='embed')
+            w2v=mx.sym.SliceChannel(data=hds, num_outputs=seq_len,squeeze_axis=1)
+            for layidx in xrange(nlayer):
+                w2v=bi_lstm_unroll(w2v, concat_weight, seq_len, nwords, nhidden, nembed, nlabels, dropout, layidx)
+            w2v=[mx.sym.expand_dims(x, axis=1) for x in w2v]
+            hidden=mx.sym.Concat(*w2v, dim=1)
+	    hidden=mx.sym.sum_axis(hidden, axis=1)/seq_len
+            cls_weight=mx.sym.Variable('cls_weight')
+            cls_bias=mx.sym.Variable('cls_bias')
+            hidden=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=nlabels, name='fc_cls')
+            loss=mx.sym.LogisticRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
+            return loss, ['data']+state_names, ['label']
+        if len(buckets) == 1:
+	    mod = mx.mod.Module(*bilstm_gen(buckets[0]), context=contexts)
+        else:
+	    mod = mx.mod.BucketingModule(bilstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts)
+        if is_train:
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+
     return vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map
 
-def predict(te, vocab ,label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout):
+def predict(te, vocab ,label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout, nepoch, batch_size):
     # Prediction for testing data set
+    batch_size=1
     tins, tlabels, tpmids, t,tld,tlrd=load_data(read_content(te), vocab, label_dict, label_rev_dict, tr=False)	
+    print 'tins', len(tins)
     res={}
     res["documents"]=[]
-    param_file = "models/%s" % prefix
+    param_file = "./models/%s" % prefix
     #arg_param,aux_param=load_param(param_file)    
-    make_predict(res, tins, len(label_dict), tpmids, model, param_file, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map)
+    make_predict(res, tins, len(label_dict), tpmids, model, param_file, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map,nepoch, batch_size)
     return res
 
 def load_param(param_path):
@@ -149,8 +191,7 @@ def load_param(param_path):
     print(aux_param)
     return arg_param, aux_param
 
-def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map, nepoch):
-    batch_size = 50
+def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map, nepoch, batch_size):
     dummy_labels=[0 for _ in xrange(len(test_data))]
     if model=='lstm': 
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -183,31 +224,61 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
 	    label_names=['label']
 	    return sym, data_names, label_names
         module = mx.mod.BucketingModule(ffn_gen, default_bucket_key=test_iter.default_bucket_key)
+    elif model=='bilstm':
+        init_cf = [('lf%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_cb = [('lb%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_hf = [('lf%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_hb = [('lb%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
+        init_states = init_cf + init_hf + init_cb + init_hb
+	state_names=[x[0] for x in init_states]
+        test_iter=BucketFlexIter(test_data, dummy_labels, nlabels, batch_size, init_states, buckets)
+	def bilstm_gen(seq_len):
+            data=mx.sym.Variable('data')
+            embed_weight=mx.sym.Variable('embed_weight')
+            concat_weight=mx.sym.Variable('concat_weight')
+            hds=mx.sym.Embedding(data=data, weight=embed_weight, input_dim=nwords, output_dim=nembed, name='embed')
+            w2v=mx.sym.SliceChannel(data=hds, num_outputs=seq_len,squeeze_axis=1)
+            for layidx in xrange(nlayer):
+                w2v=bi_lstm_unroll(w2v, concat_weight, seq_len, nwords, nhidden, nembed, nlabels, dropout, layidx)
+            w2v=[mx.sym.expand_dims(x, axis=1) for x in w2v]
+            hidden=mx.sym.Concat(*w2v, dim=1)
+	    hidden=mx.sym.sum_axis(hidden, axis=1)/seq_len
+            cls_weight=mx.sym.Variable('cls_weight')
+            cls_bias=mx.sym.Variable('cls_bias')
+            hidden=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=nlabels, name='fc_cls')
+            loss=mx.sym.LogisticRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
+            return loss, ['data']+state_names, ['label']
+        if len(buckets) == 1:
+	    mod = mx.mod.Module(*bilstm_gen(buckets[0]), context=contexts)
+        else:
+	    mod = mx.mod.BucketingModule(bilstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts)
     module.bind(data_shapes=test_iter.provide_data, label_shapes=None, for_training=False)
     #arg_params, aux_params=load_param(param_path)
     sym, arg_params, aux_params = mx.model.load_checkpoint(param_path, nepoch)
     module.set_params(arg_params=arg_params, aux_params=aux_params)
     unique={}
+    total=0
     for preds, i_batch, batch in module.iter_predict(test_iter):
         label = batch.label[0].asnumpy().astype('int32')
         posteriors = preds[0].asnumpy().astype('float32')
         idx=batch.index
         i,j=test_iter.idx[idx]
         batch_ids=test_iter.batch2id[i][j:j+batch_size]
+        total+=len(batch_ids)
         pmids=test_pmid[batch_ids]
         for p in pmids:
             if p in unique:
                 print 'error'
                 break
             unique[p]=1
-        pred=(posteriors>0.5)
-        ntest=pred.shape[0]
+        ntest=posteriors.shape[0]
         for insidx in xrange(ntest):
             ins_dict={}
             ins_dict["pmid"]=pmids[insidx]
-            ins_dict["labels"]=[mesh_map[label_rev_dict[k]] for k in xrange(nlabels) if pred[insidx,k]]
+            ins_dict["labels"]=[mesh_map[label_rev_dict[k]] for k in np.argsort(posteriors[insidx,:])[-20:]]
             #print len(ins_dict["labels"])
             res["documents"].append(ins_dict)
+    print 'pred', total
     return res
 
 if __name__=='__main__':
@@ -245,9 +316,9 @@ if __name__=='__main__':
     is_train=int(args.is_train)
     vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map = train(path, df, val, te, mesh_map, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train)
     print 'Prediction begins...'
-    res=predict(te, vocab, label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout, nepoch)
+    res=predict(te, vocab, label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout, nepoch, batch_size)
     print 'Writing results...'    
-    with open('pred/'+te.split('/')[-1].split('.json')[0]+"_"+prefix+'.json', 'w') as outfile:
+    with open('./pred/'+te.split('/')[-1].split('.json')[0]+"_"+prefix+'.json', 'w') as outfile:
         json.dump(res, outfile)
 
 

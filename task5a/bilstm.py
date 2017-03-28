@@ -24,9 +24,9 @@ def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
 
 
 
-def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label, dropout=0., layeridx=0): 
+def bi_lstm_unroll(indata, concat_weight, seq_len, input_size, num_hidden, num_embed, num_label, dropout=0., layeridx=0): 
     last_states=[]
-    last_states.append(LSTMState(c=mx.sym.Variable('lf%d_init_c'%layeridx), h=mx.sym.Variable('lf%d_init_h')))
+    last_states.append(LSTMState(c=mx.sym.Variable('lf%d_init_c'%layeridx), h=mx.sym.Variable('lf%d_init_h'%layeridx)))
     last_states.append(LSTMState(c=mx.sym.Variable('lb%d_init_c'%layeridx), h=mx.sym.Variable('lb%d_init_h'%layeridx)))
 
     forward_param=LSTMParam(i2h_weight=mx.sym.Variable('lf%d_i2h_weight'%layeridx), i2h_bias=mx.sym.Variable('lf%d_i2h_bias'%layeridx), h2h_weight=mx.sym.Variable('lf%d_h2h_weight'%layeridx), h2h_bias=mx.sym.Variable('lf%d_h2h_bias'%layeridx))
@@ -35,7 +35,7 @@ def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label,
     forward_hidden=[]
     for seqidx in xrange(seq_len):
         hidden=indata[seqidx]
-        next_state=lstm(num_hidden, indata=hidden, prev_state=last_states[0], param=forward_param)
+        next_state=lstm(num_hidden, hidden,last_states[0], forward_param, seqidx, layeridx, dropout)
         hidden=next_state.h
         last_states[0]=next_state
         forward_hidden.append(hidden)
@@ -44,14 +44,14 @@ def bi_lstm_unroll(indata,seq_len, input_size, num_hidden, num_embed, num_label,
     for seqidx in xrange(seq_len):
         seqidx=seq_len-seqidx-1
         hidden=indata[seqidx]
-        next_state=lstm(num_hidden, indata=hidden, prev_state=last_states[1],param=backward_param)
+        next_state=lstm(num_hidden, hidden, last_states[1], backward_param, seqidx, layeridx, dropout)
         hidden=next_state.h
         last_states[1]=next_state
         backward_hidden.append(hidden)
     
     hidden_all=[]
     for i in xrange(seq_len):
-        hidden_all.append(mx.sym.FullyConnected(data=mx.sym.Concat(*[forward_hidden[i], backward_hidden[i]],dim=1), num_hidden=num_hidden,weight=mx.sym.Variable('l%d_out_weight'%layeridx),bias=mx.sym.Variable('l%d_out_bias'%layeridx)))
+        hidden_all.append(mx.sym.FullyConnected(data=mx.sym.Concat(*[forward_hidden[i], backward_hidden[i]],dim=1), num_hidden=num_hidden, weight=concat_weight, no_bias=True))
     return hidden_all
     
 
