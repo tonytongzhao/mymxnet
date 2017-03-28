@@ -38,7 +38,7 @@ def get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split)
     te=list(set(range(num_ins))-set(tr))
     return BucketFlexIter(ins[tr], labels[tr], nlabels, batch_size, init_states, buckets), BucketFlexIter(ins[te], labels[te], nlabels, batch_size, init_states, buckets) 
 
-def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train):
+def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train):
     assert model in ['ffn', 'lstm', 'bilstm', 'gru']
     data=read_content(os.path.join(path, df))
     ins, labels, pmids, vocab, label_dict, label_rev_dict = load_data(data)
@@ -51,7 +51,9 @@ def train(path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model
     nlabels=len(label_dict)
     buckets=[50, 100,200, 300, 500, 800, 1000]
     prefix=model+'_'+str(nlayer)+'_'+str(nhidden)+"_"+str(nembed)
+    
     logging.basicConfig(level=logging.DEBUG)
+    logging.info('start with arguments %s', args)
     if model=='ffn':
         if val==None:
             tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
@@ -314,7 +316,7 @@ if __name__=='__main__':
     dropout=float(args.dropout)
     split=float(args.split)
     is_train=int(args.is_train)
-    vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map = train(path, df, val, te, mesh_map, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train)
+    vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map = train(args, path, df, val, te, mesh_map, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train)
     print 'Prediction begins...'
     res=predict(te, vocab, label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefix, buckets, model, nhidden, nlayer, dropout, nepoch, batch_size)
     print 'Writing results...'    
