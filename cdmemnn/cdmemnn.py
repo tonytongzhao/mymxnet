@@ -77,7 +77,7 @@ def get_data(data, split, batch_size, user2item, item2user, upass, ipass):
 
     return (DataIter(tr, batch_size, user2item, item2user, upass, ipass), DataIter(te, batch_size, user2item, item2user, upass, ipass))
 
-def train(args,data_path, data, split, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname):
+def train(args,data_path, data, val, split, network, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname):
     ''' 
     model=mx.model.FeedForward(ctx=mx.gpu(),symbol=network, num_epoch=num_epoch,learning_rate=learning_rate, wd=0.0001, momentum=0.9, initializer=mx.init.Normal(sigma=0.01))
     train, test= get_data(data, batch_size, user2item, item2user,  upass, ipass)
@@ -90,11 +90,15 @@ def train(args,data_path, data, split, network, batch_size, num_epoch, user2item
     #init=mx.init.Xavier(factor_type='in', magnitude=1)
     #network.init_params(initializer=init)
     #network.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4}) 
-    train, test= get_data(data, split, batch_size, user2item, item2user,  upass, ipass)
+    if not args.val:
+        train, val_iter= get_data(data, split, batch_size, user2item, item2user,  upass, ipass)
+    else:
+        train=DataIter(data, batch_size, user2item, item2user, upass, ipass)
+        val_iter=DataIter(val, batch_size, user2item, item2user, upass, ipass)
     #logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn_result']), logname+'.log'), level=logging.DEBUG)
     logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
-    network.fit(train, eval_data=test, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
+    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
@@ -114,7 +118,7 @@ def train(args,data_path, data, split, network, batch_size, num_epoch, user2item
             grp_i.append(ig)
         network.forward(data_batch=mx.io.D)
     '''
-def convert_data(user, item, score, user_dict, item_dict, user2item, item2user):
+def convert_data(user, item, score, user_dict, item_dict, user2item, item2user, is_train):
     if user not in user_dict:
         user_dict[user]=len(user_dict)
     user=user_dict[user]
@@ -139,6 +143,7 @@ if __name__=='__main__':
     parser.add_argument('-eta', help='learning rate', dest='learning_rate', default=0.005)
     parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
     parser.add_argument('-split',dest='split', help='train & test split ratio', default=0.9)
+    parser.add_argument('-val', help='validation set', dest='val', default=None)
     args=parser.parse_args()
 
     user2item=collections.defaultdict(set)
@@ -150,7 +155,13 @@ if __name__=='__main__':
     with open(args.fi, 'r') as f:
         for line in f:
             tks=line.strip().split('\t')
-            data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user))
+            data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user, True))
+    val=[]
+    if args.val:
+        with open(args.val, 'r') as f:
+            for line in f:
+                tks=line.strip().split('\t')
+                val.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user, False))
     print '#Users, ',len(user_dict)
     print '#Items, ',len(item_dict)
     print '#Ratings, ', len(data)
@@ -166,7 +177,7 @@ if __name__=='__main__':
     split=float(args.split)
     net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+'_split_'+str(args.split)
-    train(args, args.fi,data, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
+    train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
 
 
