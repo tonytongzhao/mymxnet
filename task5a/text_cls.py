@@ -18,11 +18,24 @@ def accuracy(label, pred):
     print sum(np.round(pred[0][:100]))
     print sum(np.multiply(label[0][:100],np.round(pred[0][:100])))
     '''
-    return np.sum(np.multiply(label,np.round(pred))!=0)/np.sum(label)
+    prec=0.0
+    batch_size=pred.shape[0]
+    for i in xrange(batch_size):
+        l=set(np.nonzero(label[i])[0])
+        p=set(np.argsort(pred[i])[-20:])
+        prec+=len(p & l)
+    return prec/np.sum(label)
     #return np.sum(label)
 
 def ins_recall(label, pred):
-    return np.sum(np.multiply(label,np.round(pred))!=0)/np.sum(np.round(pred))
+#    return np.sum(np.multiply(label,np.round(pred))!=0)/np.sum(np.round(pred))
+    prec=0.0
+    batch_size=pred.shape[0]
+    for i in xrange(batch_size):
+        l=set(np.nonzero(label[i])[0])
+        p=set(np.argsort(pred[i])[-20:])
+        prec+=len(p & l)
+    return prec/(20.0*batch_size)
 
 
 
