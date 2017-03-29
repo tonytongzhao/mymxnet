@@ -77,7 +77,7 @@ def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num
     '''
     #If one final output
     fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label)
-    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'))    
+    loss=mx.sym.LinearRegressionOutput(data=fc, label=mx.sym.Variable('label'))    
 	
     return loss
 

@@ -169,7 +169,7 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
             cls_weight=mx.sym.Variable('cls_weight')
             cls_bias=mx.sym.Variable('cls_bias')
             hidden=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=nlabels, name='fc_cls')
-            loss=mx.sym.LogisticRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
+            loss=mx.sym.LinearRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
             return loss, ['data']+state_names, ['label']
         if len(buckets) == 1:
 	    mod = mx.mod.Module(*bilstm_gen(buckets[0]), context=contexts)
@@ -261,7 +261,7 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
             cls_weight=mx.sym.Variable('cls_weight')
             cls_bias=mx.sym.Variable('cls_bias')
             hidden=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=nlabels, name='fc_cls')
-            loss=mx.sym.LogisticRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
+            loss=mx.sym.LinearRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
             return loss, ['data']+state_names, ['label']
         if len(buckets) == 1:
 	    mod = mx.mod.Module(*bilstm_gen(buckets[0]), context=contexts)

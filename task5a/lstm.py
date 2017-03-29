@@ -71,7 +71,7 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
             hidden=mx.sym.Dropout(data=hidden, p=dropout, name='dropout%d'%(seqidx))
 	    loss_all.append(hidden)
     fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label, name='cls_lstm_fc')
-    loss=mx.sym.LogisticRegressionOutput(data=fc, label=mx.sym.Variable('label'), name='lstm_sm')    
+    loss=mx.sym.LinearRegressionOutput(data=fc, label=mx.sym.Variable('label'), name='lstm_sm')    
     return loss 
 	#return mx.sym.Group(loss_all)
 
