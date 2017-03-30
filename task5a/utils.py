@@ -19,6 +19,7 @@ def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
     features=[]
     labels=[]
     pmids=[]
+    newwords=0
     stop=set(stopwords.words('english'))
     tokenizer = RegexpTokenizer(r'\w+')
     if tr:
@@ -44,6 +45,7 @@ def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
                         continue
                     if len(w) and w not in vocab:
 			if not tr:
+                            newwords+=1
 			    continue
                         vocab[w]=idx
                         idx+=1
@@ -55,6 +57,7 @@ def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
                         continue
                     if len(w) and w not in vocab:
 			if not tr:
+                            newwords+=1
 			    continue
 			vocab[w]=idx
                         idx+=1
@@ -62,6 +65,7 @@ def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
         features.append(ins_feature)
         labels.append(ins_label)
         pmids.append(d['pmid'])
+    print 'new words', newwords
     return np.array(features), np.array(labels), np.array(pmids), vocab, label_dict, label_rev_dict
 
 def download_test_data(url):

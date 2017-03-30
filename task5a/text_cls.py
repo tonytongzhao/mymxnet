@@ -238,7 +238,7 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
 	    data_names=['data']+state_names
 	    label_names=['label']
 	    return sym, data_names, label_names
-        module = mx.mod.BucketingModule(ffn_gen, default_bucket_key=test_iter.default_bucket_key)
+        module = mx.mod.BucketingModule(gru_gen, default_bucket_key=test_iter.default_bucket_key)
     elif model=='bilstm':
         init_cf = [('lf%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_cb = [('lb%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
