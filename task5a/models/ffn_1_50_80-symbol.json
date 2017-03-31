@@ -1,0 +1,105 @@
+{
+  "nodes": [
+    {
+      "op": "null", 
+      "name": "data", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "embed_weight", 
+      "inputs": []
+    }, 
+    {
+      "op": "Embedding", 
+      "name": "ffn_embed", 
+      "attr": {
+        "input_dim": "80963", 
+        "output_dim": "80"
+      }, 
+      "inputs": [[0, 0, 0], [1, 0, 0]]
+    }, 
+    {
+      "op": "sum", 
+      "name": "sum_axis3", 
+      "attr": {"axis": "1"}, 
+      "inputs": [[2, 0, 0]]
+    }, 
+    {
+      "op": "_div_scalar", 
+      "name": "_divscalar3", 
+      "attr": {"scalar": "150"}, 
+      "inputs": [[3, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "fc0_weight", 
+      "attr": {"num_hidden": "50"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "fc0_bias", 
+      "attr": {"num_hidden": "50"}, 
+      "inputs": []
+    }, 
+    {
+      "op": "FullyConnected", 
+      "name": "fc0", 
+      "attr": {"num_hidden": "50"}, 
+      "inputs": [[4, 0, 0], [5, 0, 0], [6, 0, 0]]
+    }, 
+    {
+      "op": "Activation", 
+      "name": "relu0", 
+      "attr": {"act_type": "relu"}, 
+      "inputs": [[7, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "cls_weight", 
+      "inputs": []
+    }, 
+    {
+      "op": "null", 
+      "name": "cls_bias", 
+      "inputs": []
+    }, 
+    {
+      "op": "FullyConnected", 
+      "name": "ffn_cls", 
+      "attr": {"num_hidden": "12635"}, 
+      "inputs": [[8, 0, 0], [9, 0, 0], [10, 0, 0]]
+    }, 
+    {
+      "op": "null", 
+      "name": "label", 
+      "inputs": []
+    }, 
+    {
+      "op": "LinearRegressionOutput", 
+      "name": "linearregressionoutput3", 
+      "inputs": [[11, 0, 0], [12, 0, 0]]
+    }
+  ], 
+  "arg_nodes": [0, 1, 5, 6, 9, 10, 12], 
+  "node_row_ptr": [
+    0, 
+    1, 
+    2, 
+    3, 
+    4, 
+    5, 
+    6, 
+    7, 
+    8, 
+    9, 
+    10, 
+    11, 
+    12, 
+    13, 
+    14
+  ], 
+  "heads": [[13, 0, 0]], 
+  "attrs": {"mxnet_version": ["int", 904]}
+}

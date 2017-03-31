@@ -66,6 +66,7 @@ def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
         labels.append(ins_label)
         pmids.append(d['pmid'])
     print 'new words', newwords
+    print 'cur_words', len(vocab)
     return np.array(features), np.array(labels), np.array(pmids), vocab, label_dict, label_rev_dict
 
 def download_test_data(url):

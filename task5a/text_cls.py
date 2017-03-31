@@ -84,7 +84,7 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
         else:
 	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
         if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=30), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=3), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
