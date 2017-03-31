@@ -65,6 +65,7 @@ def my_GRU_unroll(num_gru_layer, seq_len, input_size, num_hidden, num_embed, num
             last_states[i]=next_state
         if drop_r:
             hidden=mx.sym.Dropout(data=hidden, p=drop_r)
+        hidden=mx.sym.BatchNorm(data=hidden, name='bn', fix_gamma=True)
         hidden_all.append(hidden)
 
 

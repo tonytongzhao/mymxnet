@@ -69,6 +69,7 @@ def lstm_unroll(num_lstm_layer, seq_len, input_size, num_hidden, num_embed, num_
             last_states[i]=next_state
         if dropout:
             hidden=mx.sym.Dropout(data=hidden, p=dropout, name='dropout%d'%(seqidx))
+            hidden=mx.sym.BatchNorm(data=hidden, fix_gamma=True, name='bn')
 	    loss_all.append(hidden)
     fc=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=num_label, name='cls_lstm_fc')
     loss=mx.sym.LinearRegressionOutput(data=fc, label=mx.sym.Variable('label'), name='lstm_sm')    
