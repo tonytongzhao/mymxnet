@@ -22,7 +22,7 @@ def accuracy(label, pred):
     batch_size=pred.shape[0]
     for i in xrange(batch_size):
         l=set(np.nonzero(label[i])[0])
-        p=set(np.argsort(pred[i])[-20:])
+        p=set(np.argsort(pred[i])[-50:])
         prec+=len(p & l)
     return prec/np.sum(label)
     #return np.sum(label)
@@ -33,7 +33,7 @@ def ins_recall(label, pred):
     batch_size=pred.shape[0]
     for i in xrange(batch_size):
         l=set(np.nonzero(label[i])[0])
-        p=set(np.argsort(pred[i])[-20:])
+        p=set(np.argsort(pred[i])[-50:])
         prec+=len(p & l)
     return prec/(20.0*batch_size)
 
@@ -62,7 +62,7 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
     contexts=[mx.context.gpu(i) for i in xrange(1)]   
     nwords=len(vocab)
     nlabels=len(label_dict)
-    buckets=[50, 100,200, 300, 500, 800, 1000]
+    buckets=[50, 100,200, 300, 150]
     prefix=model+'_'+str(nlayer)+'_'+str(nhidden)+"_"+str(nembed)
     
     logging.basicConfig(level=logging.DEBUG)
@@ -84,7 +84,7 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
         else:
 	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
         if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=30), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -290,7 +290,7 @@ def make_predict(res, test_data, nlabels, test_pmid, model, param_path, buckets,
         for insidx in xrange(ntest):
             ins_dict={}
             ins_dict["pmid"]=pmids[insidx]
-            ins_dict["labels"]=[mesh_map[label_rev_dict[k]] for k in np.argsort(posteriors[insidx,:])[-20:]]
+            ins_dict["labels"]=[mesh_map[label_rev_dict[k]] for k in np.argsort(posteriors[insidx,:])[-50:]]
             #print len(ins_dict["labels"])
             res["documents"].append(ins_dict)
     print 'pred', total
