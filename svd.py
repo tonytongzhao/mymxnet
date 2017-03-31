@@ -64,13 +64,17 @@ def get_data(data,split, n, batch_size):
     te=list(set(data)-set(tr))
     return (DataIter(tr, batch_size), DataIter(te, batch_size))
 
-def train(data, network, split, n, batch_size, num_epoch, learning_rate):
+def train(data, val, network, split, n, batch_size, num_epoch, learning_rate, log_path):
   #  model=mx.mod.Module(network)
     model=mx.model.FeedForward(ctx=mx.gpu(),symbol=network, num_epoch=num_epoch,learning_rate=learning_rate, wd=0.0001, momentum=0.9, initializer=mx.init.Xavier(factor_type="in",magnitude=2.34))
-    train, test= get_data(data, split, n,  batch_size)
+    if val==None:
+        train, test= get_data(data, split, n,  batch_size)
+    else:
+        train=DataIter(data, batch_size)
+        test=DataIter(val, batch_size)
 #    model.bind(data_shapes=train.provide_data, label_shapes=train.provide_label)
  #   model.init_params()
-    logging.basicConfig(filename='mf.log', level=logging.DEBUG)
+    logging.basicConfig(filename=log_path, level=logging.DEBUG)
     model.fit(train,eval_data=test, eval_metric=RMSE, batch_end_callback=mx.callback.Speedometer(batch_size, 20000/batch_size))
 
 def mf(max_user, max_item, num_hidden):
@@ -101,6 +105,7 @@ def convert_data(user, item, score, user_dict, item_dict):
 user_dict={}
 item_dict={}
 data_file=sys.argv[1]
+val=None
 data=[]
 n=0
 with open(data_file, 'r') as f:
@@ -108,15 +113,24 @@ with open(data_file, 'r') as f:
         tks=line.strip().split('\t')
         n+=1
         data.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict))
+if sys.argv[2]:
+    val_file=sys.argv[2]
+    val=[]
+    with open(val_file, 'r') as f:
+        for line in f:
+            tks=line.strip().split('\t')
+            n+=1
+            val.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict))
 print '#User, ', len(user_dict)
 print '#Item, ', len(item_dict)
 print '#Rating, ', n
-num_hidden=300
+num_hidden=100
 batch_size=50
 num_epoch=2000
 learning_rate=0.01
 net=mf(len(user_dict), len(item_dict), num_hidden)
-train(data, net, 0.9, n, batch_size, num_epoch, learning_rate)
+log_path='/'.join(data_file.split('/')[:-1])+'/res/svd_bias_'+str(num_hidden)+"_"+str(learning_rate)+'.log'
+train(data, val, net, 0.9, n, batch_size, num_epoch, learning_rate, log_path)
 
 
 

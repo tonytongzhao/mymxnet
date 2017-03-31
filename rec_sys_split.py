@@ -36,10 +36,10 @@ dfte=path+'/'+dfile.split('/')[-1]+'.te'
 with open(dftr, 'w') as tfw:
     for u in tr:
         for i in tr[u]:
-            tfw.write(u+'/t'+i+'/t'+tr[u][i]+'/n')
+            tfw.write('%s\t%s\t%s\n' %(u, i, tr[u][i]))
 tfw.close()
 with open(dfte, 'w') as tfw:
     for u in te:
         for i in te[u]:
-            tfw.write(u+'/t'+i+'/t'+te[u][i]+'/n')
+            tfw.write('%s\t%s\t%s\n' %(u, i, te[u][i]))
 tfw.close()
