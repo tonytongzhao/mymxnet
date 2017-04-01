@@ -1,2 +1,2 @@
-#Collaborative Dynamic MeMNN
+#Collaborative MeM NN with Cross Attention
 Parameter tuning and testing...
