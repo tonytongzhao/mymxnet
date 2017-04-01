@@ -58,36 +58,41 @@ def get_cmemnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item,
     weight_z=mx.sym.Variable('z_weight')
     bias_z=mx.sym.Variable('z_bias')
     m_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
+    mu=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     m_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
+    mi=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
-
-    #Col user attention
-    att_u=mx.sym.broadcast_mul(mx.sym.expand_dims(m_i, axis=1), grp_u)
-    att_u=mx.sym.sum_axis(att_u, axis=2)
-    att_u=mx.sym.SoftmaxActivation(data=att_u)
     
-    att_u=mx.sym.expand_dims(att_u, axis=2)
-    mem_u=mx.sym.broadcast_mul(grp_u, att_u)
-    col_u=mx.sym.sum_axis(data=mem_u, axis=1)
-    #alpha_u=mx.sym.Variable('alpha_u_weight')
-    #m_u=alpha_u*col_u+(1-alpha_u)*m_u
-    mu=mx.sym.Concat(*[col_u, m_u], dim=1)
+    for i in xrange(num_layer):
+        #Col user attention
+        att_u=mx.sym.broadcast_mul(mx.sym.expand_dims(mi, axis=1), grp_u)
+        att_u=mx.sym.sum_axis(att_u, axis=2)
+        att_u=mx.sym.SoftmaxActivation(data=att_u)
+        
+        att_u=mx.sym.expand_dims(att_u, axis=2)
+        mem_u=mx.sym.broadcast_mul(grp_u, att_u)
+        col_u=mx.sym.sum_axis(data=mem_u, axis=1)
+        #alpha_u=mx.sym.Variable('alpha_u_weight')
+        #m_u=alpha_u*col_u+(1-alpha_u)*m_u
 
-    #Col item attention
-    att_i=mx.sym.broadcast_mul(mx.sym.expand_dims(m_u, axis=1), grp_i)
-    att_i=mx.sym.sum_axis(att_i, axis=2)
-    att_i=mx.sym.SoftmaxActivation(data=att_i)
+        #Col item attention
+        att_i=mx.sym.broadcast_mul(mx.sym.expand_dims(mu, axis=1), grp_i)
+        att_i=mx.sym.sum_axis(att_i, axis=2)
+        att_i=mx.sym.SoftmaxActivation(data=att_i)
     
-    att_i=mx.sym.expand_dims(att_i, axis=2)
-    mem_i=mx.sym.broadcast_mul(grp_i, att_i)
-    col_i=mx.sym.sum_axis(data=mem_i, axis=1)
-    #alpha_i=mx.sym.Variable('alpha_i_weight')
-    #m_i=alpha_i*col_i+(1-alpha_i)*m_i
-    mi=mx.sym.Concat(*[col_i, m_i], dim=1)
-
+        att_i=mx.sym.expand_dims(att_i, axis=2)
+        mem_i=mx.sym.broadcast_mul(grp_i, att_i)
+        col_i=mx.sym.sum_axis(data=mem_i, axis=1)
+        #alpha_i=mx.sym.Variable('alpha_i_weight')
+        #m_i=alpha_i*col_i+(1-alpha_i)*m_i
+        
+        mu=col_u
+        mi=col_i
      
+    mu=mx.sym.Concat(*[mu, m_u], dim=1)
+    mi=mx.sym.Concat(*[mi, m_i], dim=1)
     #pred=col_i*col_u
     #pred=m_u*m_i
     pred=mu*mi
