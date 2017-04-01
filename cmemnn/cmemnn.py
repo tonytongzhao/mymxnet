@@ -98,7 +98,7 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
     #logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['res']), logname+'.log'), level=logging.DEBUG)
     logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
-    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
+    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.9}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 3000))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
