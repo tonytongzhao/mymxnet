@@ -175,7 +175,7 @@ if __name__=='__main__':
     ipass=int(args.ipass)
     npass=int(args.npass)
     split=float(args.split)
-    net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    net=model.get_cmemnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+'_split_'+str(args.split)
     train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
