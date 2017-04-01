@@ -62,7 +62,7 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
     contexts=[mx.context.gpu(i) for i in xrange(1)]   
     nwords=len(vocab)
     nlabels=len(label_dict)
-    buckets=[50, 100,200, 300, 150]
+    buckets=[50, 100,200, 300, 150, 1000]
     prefix=model+'_'+str(nlayer)+'_'+str(nhidden)+"_"+str(nembed)
     
     logging.basicConfig(level=logging.DEBUG)
