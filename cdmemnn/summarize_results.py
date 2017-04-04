@@ -7,8 +7,8 @@ tr_res_list={}
 val_res_list={}
 for filename in os.listdir(resdir):
     print filename
-    tr_res_list[filename]=[]
-    val_res_list[filename]=[]
+    tr_res_list[filename]=[5]
+    val_res_list[filename]=[5]
     with open(os.path.join(resdir, filename), 'r') as f:
         for line in f:
             if 'Train-RMSE' in line:

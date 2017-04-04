@@ -6,10 +6,19 @@ dfile=sys.argv[1]
 path='/'.join(dfile.split('/')[:-1])
 data=[]#collections.defaultdict(dict)
 nins=0
+userdict={}
+itemdict={}
 with open(dfile, 'r') as f:
     for line in f:
         tks=line.split('::')
         user,item, rate=tks[0], tks[1], tks[2]
+        if user not in userdict:
+            userdict[user]=len(userdict)
+        user=str(userdict[user])
+
+        if item not in itemdict:
+            itemdict[item]=len(itemdict)
+        item=str(itemdict[item])
         data.append([user, item, rate]) 
         nins+=1
 print nins

@@ -161,6 +161,8 @@ if __name__=='__main__':
         with open(args.val, 'r') as f:
             for line in f:
                 tks=line.strip().split('\t')
+                if int(tks[0]) not in user_dict or int(tks[1]) not in item_dict:
+                    continue
                 val.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user, False))
     print '#Users, ',len(user_dict)
     print '#Items, ',len(item_dict)
@@ -176,7 +178,7 @@ if __name__=='__main__':
     npass=int(args.npass)
     split=float(args.split)
     net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
-    logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+'_split_'+str(args.split)
+    logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
     train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
 
