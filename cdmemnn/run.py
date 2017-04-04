@@ -1,7 +1,7 @@
 import os
 
 if __name__=='__main__':
-    eta=[0.08]
+    eta=[0.05]
     upass=[5,15]
     ipass=[5,10]
     num_embed=[300,500]
