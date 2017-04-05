@@ -19,8 +19,12 @@ print 'Best Tr RMSE'
 for i in tr_res_list:
     print i, min(tr_res_list[i])
       
-
+cbi=None
+cbr=5
 print 'Best Val RMSE'
 for i in tr_res_list:
     print i, min(val_res_list[i])
-            
+    if cbr>min(val_res_list[i]):
+        cbr=min(val_res_list[i])
+        cbi=i
+print 'Current Best',i, cbr
