@@ -32,7 +32,7 @@ def get_ncf(batch_size, num_embed, num_hidden, num_layer, num_user, num_item,dro
 
     #Merge two parts
     pred=mx.sym.Concat(*[mlp_data, mf_res], dim=1)
-    pred=mx.sym.FullyConnected(data=pred, num_hidden=1, name='cls')
+    pred=mx.sym.FullyConnected(data=pred, num_hidden=1, name='cls', no_bias=True)
     pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
     return pred
 

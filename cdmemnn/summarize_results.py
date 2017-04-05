@@ -27,4 +27,4 @@ for i in tr_res_list:
     if cbr>min(val_res_list[i]):
         cbr=min(val_res_list[i])
         cbi=i
-print 'Current Best',i, cbr
+print 'Current Best',cbi, cbr
