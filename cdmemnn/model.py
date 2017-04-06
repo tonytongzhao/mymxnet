@@ -71,7 +71,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             z=mx.sym.Concat(*z, dim=1)
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z, name='ufc1')
             z=mx.sym.Activation(data=z, act_type='relu')
-            z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
+            #z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ufc2')
             z=mx.sym.Activation(data=z, act_type='sigmoid')
             z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
@@ -93,7 +93,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             z=mx.sym.Activation(data=z, act_type='relu')
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ifc2')
             z=mx.sym.Activation(data=z, act_type='sigmoid')
-            z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
+            #z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
             z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
             g=mx.sym.SoftmaxActivation(data=z)
             c_i=mx.sym.broadcast_mul(grp_i, g)
@@ -107,6 +107,9 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)
     pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+    #pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')
+    
+    #pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
 
