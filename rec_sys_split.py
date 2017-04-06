@@ -34,12 +34,12 @@ print nte
 dftr=path+'/'+dfile.split('/')[-1]+'.tr'
 dfte=path+'/'+dfile.split('/')[-1]+'.te'
 with open(dftr, 'w') as tfw:
-    for u in tr:
+    for u in sorted(tr.keys()):
         for i in tr[u]:
             tfw.write('%s\t%s\t%s\n' %(u, i, tr[u][i]))
 tfw.close()
 with open(dfte, 'w') as tfw:
-    for u in te:
+    for u in sorted(te.keys()):
         for i in te[u]:
             tfw.write('%s\t%s\t%s\n' %(u, i, te[u][i]))
 tfw.close()

@@ -22,14 +22,14 @@ dfte=path+'/'+dfile.split('/')[-1]+'.random.item_first.te'
 wtr=0
 wte=0
 with open(dftr, 'w') as tfw:
-    for i in tr_ins:        
-        u,i,r=data[i]
+    for c in tr_ins:        
+        u,i,r=data[c]
         tfw.write('%s\t%s\t%s\n' %(i, u, r))
         wtr+=1
 tfw.close()
 with open(dfte, 'w') as tfw:
-    for i in te_ins:        
-        u,i,r=data[i]
+    for c in te_ins:        
+        u,i,r=data[c]
         tfw.write('%s\t%s\t%s\n' %(i, u, r))
         wtr+=1
 

@@ -6,19 +6,10 @@ dfile=sys.argv[1]
 path='/'.join(dfile.split('/')[:-1])
 data=[]#collections.defaultdict(dict)
 nins=0
-userdict={}
-itemdict={}
 with open(dfile, 'r') as f:
     for line in f:
         tks=line.split('::')
         user,item, rate=tks[0], tks[1], tks[2]
-        if user not in userdict:
-            userdict[user]=len(userdict)
-        user=str(userdict[user])
-
-        if item not in itemdict:
-            itemdict[item]=len(itemdict)
-        item=str(itemdict[item])
         data.append([user, item, rate]) 
         nins+=1
 print nins
@@ -31,14 +22,14 @@ dfte=path+'/'+dfile.split('/')[-1]+'.random.te'
 wtr=0
 wte=0
 with open(dftr, 'w') as tfw:
-    for i in tr_ins:        
-        u,i,r=data[i]
+    for c in tr_ins:        
+        u,i,r=data[c]
         tfw.write('%s\t%s\t%s\n' %(u, i, r))
         wtr+=1
 tfw.close()
 with open(dfte, 'w') as tfw:
-    for i in te_ins:        
-        u,i,r=data[i]
+    for c in te_ins:        
+        u,i,r=data[c]
         tfw.write('%s\t%s\t%s\n' %(u, i, r))
         wtr+=1
 
