@@ -36,9 +36,11 @@ def myGRU(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
 
 def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, nupass, nipass, npass, dropout=0.):
     last_states=[]
-    param_cells=[]
+    param_ucells=[]
+    param_icells=[]
     for i in xrange(num_layer):
-        param_cells.append(GRUParam(gates_i2h_weight=mx.sym.Variable('l%d_i2h_gates_weight'%i), gates_i2h_bias=mx.sym.Variable('l%d_i2h_gates_bias'%i),gates_h2h_weight=mx.sym.Variable('l%d_h2h_gates_weight'%i),gates_h2h_bias=mx.sym.Variable('l%d_h2h_gates_bias'%i),trans_i2h_weight=mx.sym.Variable('l%d_i2h_trans_weight'%i), trans_i2h_bias=mx.sym.Variable('l%d_i2h_bias'%i), trans_h2h_weight=mx.sym.Variable('l%d_h2h_trans_weight'%i), trans_h2h_bias=mx.sym.Variable('l%d_h2h_bias'%i)))
+        param_ucells.append(GRUParam(gates_i2h_weight=mx.sym.Variable('ul%d_i2h_gates_weight'%i), gates_i2h_bias=mx.sym.Variable('ul%d_i2h_gates_bias'%i),gates_h2h_weight=mx.sym.Variable('ul%d_h2h_gates_weight'%i),gates_h2h_bias=mx.sym.Variable('ul%d_h2h_gates_bias'%i),trans_i2h_weight=mx.sym.Variable('ul%d_i2h_trans_weight'%i), trans_i2h_bias=mx.sym.Variable('ul%d_i2h_bias'%i), trans_h2h_weight=mx.sym.Variable('ul%d_h2h_trans_weight'%i), trans_h2h_bias=mx.sym.Variable('ul%d_h2h_bias'%i)))
+        param_icells.append(GRUParam(gates_i2h_weight=mx.sym.Variable('il%d_i2h_gates_weight'%i), gates_i2h_bias=mx.sym.Variable('il%d_i2h_gates_bias'%i),gates_h2h_weight=mx.sym.Variable('il%d_h2h_gates_weight'%i),gates_h2h_bias=mx.sym.Variable('il%d_h2h_gates_bias'%i),trans_i2h_weight=mx.sym.Variable('il%d_i2h_trans_weight'%i), trans_i2h_bias=mx.sym.Variable('il%d_i2h_bias'%i), trans_h2h_weight=mx.sym.Variable('il%d_h2h_trans_weight'%i), trans_h2h_bias=mx.sym.Variable('il%d_h2h_bias'%i)))
         state=GRUState(h=mx.sym.Variable('l%d_init_h'%i))
         last_states.append(state)
     user=mx.sym.Variable('user')
@@ -67,19 +69,20 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
         for i in xrange(nupass):
             cur_col_u=col_u[i]
             q_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
-            z=[cur_col_u, m_u, q_u, mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
+            #z=[cur_col_u, m_u, q_u,  mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
+            z=[ mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
             z=mx.sym.Concat(*z, dim=1)
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z, name='ufc1')
             z=mx.sym.Activation(data=z, act_type='relu')
-            #z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
-            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ufc2')
+            z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
+            z=mx.sym.FullyConnected(data=z, num_hidden=nupass, name='ufc2')
             z=mx.sym.Activation(data=z, act_type='sigmoid')
-            z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
+            #z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
             g=mx.sym.SoftmaxActivation(data=z)
             c_u=mx.sym.broadcast_mul(grp_u, g)
             c_u=mx.sym.sum_axis(data=c_u, axis=1)
             mu_state=GRUState(h=m_u)
-            next_state=myGRU(num_embed, indata=cur_col_u, prev_state=mu_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=dropout)
+            next_state=myGRU(num_embed, indata=cur_col_u, prev_state=mu_state, param=param_ucells[0], seqidx=0, layeridx=0, dropout=dropout)
             m_u=next_state.h
 
 
@@ -87,19 +90,21 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
         for i in xrange(nipass):
             cur_col_i=col_i[i]
             q_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
-            z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
+            #z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
+            z=[mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
             z=mx.sym.Concat(*z, dim=1)
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z, bias=bias_z, name='ifc1')
             z=mx.sym.Activation(data=z, act_type='relu')
-            z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden, name='ifc2')
+            z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
+            z=mx.sym.FullyConnected(data=z, num_hidden=nipass, name='ifc2')
             z=mx.sym.Activation(data=z, act_type='sigmoid')
             #z=mx.sym.BatchNorm(data=z, fix_gamma=True, name='bn')
-            z=mx.sym.FullyConnected(data=z, num_hidden=nupass)
+            #z=mx.sym.FullyConnected(data=z, num_hidden=nipass)
             g=mx.sym.SoftmaxActivation(data=z)
             c_i=mx.sym.broadcast_mul(grp_i, g)
             c_i=mx.sym.sum_axis(data=c_i, axis=1)
             mi_state=GRUState(h=m_i)
-            next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_cells[0], seqidx=0, layeridx=0, dropout=dropout)
+            next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_icells[0], seqidx=0, layeridx=0, dropout=dropout)
             m_i=next_state.h
     m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u), dim=1)
     m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i), dim=1)
