@@ -95,8 +95,10 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
     else:
         train=DataIter(data, batch_size, user2item, item2user, upass, ipass)
         val_iter=DataIter(val, batch_size, user2item, item2user, upass, ipass)
-    #logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['res']), logname+'.log'), level=logging.DEBUG)
-    logging.basicConfig(level=logging.DEBUG)
+    if args.log:
+        logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['res']), logname+'.log'), level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
     network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer_params={'learning_rate':learning_rate, 'momentum':0.85}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
     '''
@@ -144,6 +146,7 @@ if __name__=='__main__':
     parser.add_argument('-dropout', help='dropout', dest='dropout', default=0.2)
     parser.add_argument('-split',dest='split', help='train & test split ratio', default=0.9)
     parser.add_argument('-val', help='validation set', dest='val', default=None)
+    parser.add_argument('-log', help='log to file', default=False)
     args=parser.parse_args()
 
     user2item=collections.defaultdict(set)
