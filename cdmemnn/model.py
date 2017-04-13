@@ -68,6 +68,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     for _ in xrange(npass):
         for i in xrange(nupass):
             cur_col_u=col_u[i]
+            cur_col_u=mx.sym.BlockGrad(data=cur_col_u)
             q_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
             #z=[cur_col_u, m_u, q_u,  mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
             z=[ mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
@@ -89,6 +90,7 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             
         for i in xrange(nipass):
             cur_col_i=col_i[i]
+            cur_col_i=mx.sym.BlockGrad(data=cur_col_i)
             q_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
             #z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
             z=[mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
@@ -112,9 +114,8 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)
     pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
-    #pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')
-    
-    #pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
+#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
 
