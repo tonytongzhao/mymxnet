@@ -120,10 +120,3 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
 
 
         
-
-
-
-
-
-
-
