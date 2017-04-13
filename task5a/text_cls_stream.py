@@ -6,7 +6,7 @@ from variable_bucket import BucketFlexIter
 from bilstm import bi_lstm_unroll
 import argparse, bisect
 import random, string
-from utils import read_content, load_data, text2id, download_test_data, load_test_data, mesh_mapping
+from utils import read_content, load_data, text2id, download_test_data, load_test_data, mesh_mapping, chunkl, read_content_stream, load_data_statics
 import numpy as np
 import logging
 def accuracy(label, pred):
@@ -53,39 +53,45 @@ def get_data_iter(ins, labels, nlabels, batch_size, init_states, buckets, split)
 
 def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch, model, nlayer, eta, dropout, split, is_train):
     assert model in ['ffn', 'lstm', 'bilstm', 'gru']
-    data=read_content(os.path.join(path, df))
-    ins, labels, pmids, vocab, label_dict, label_rev_dict = load_data(data)
-    del data
+    data=read_content_stream(os.path.join(path, df))
+    nins, vocab, label_dict, label_rev_dict = load_data_statics(data)
     mesh_map, mesh_rev_map=mesh_mapping(meshmap)
-    print '#ins', len(ins)
-    print '#labels', len(label_dict)
-    print '#words', len(vocab)
     contexts=[mx.context.gpu(i) for i in xrange(1)]   
     nwords=len(vocab)
     nlabels=len(label_dict)
+    print '#ins', nins
+    print '#labels', nlabels
+    print '#words', nwords
+    npart=30
+    pins=chunkl(nins, npart)
     buckets=[50, 100,200, 300, 150, 1000]
     prefix=model+'_'+str(nlayer)+'_'+str(nhidden)+"_"+str(nembed)
-    
+    gen_data=read_content_stream(os.path.join(path, df)) 
     logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
     if model=='ffn':
-        if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
-        else:
-            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
-            vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
-            val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
         def ffn_gen(seq_len):
             sym=ffn.ffn(nlayer, seq_len, nwords, nhidden, nembed, nlabels, dropout)
 	    data_names=['data']
 	    label_names=['label']
 	    return sym, data_names, label_names
-	if len(buckets) == 1:
-	    mod = mx.mod.Module(*ffn_gen(buckets[0]), context=contexts)
-        else:
-	    mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=3), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        for pidx in pins:    
+            data={'articles':[]} 
+            for _ in xrange(pidx):
+                data.append(gen_data.next())
+            if val==None:
+                tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            else:
+                ins,labels, pmids, v,ld,lrd=load_data(data, vocab, label_dict, label_rev_dict)
+                tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
+                vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
+                val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
+       	    if len(buckets) == 1:
+	        mod = mx.mod.Module(*ffn_gen(buckets[0]), context=contexts)
+            else:
+	        mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+            if is_train:
+                mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=3), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
         
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -109,18 +115,17 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
 	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
         if is_train:
             mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
-        ''' 
-        mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
-        init=mx.init.Xavier(factor_type='in', magnitude=2.34)
-        mod.init_params(initializer=init)
-        mod.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4})
-        for e in xrange(nepoch):
-            mod.forward(data_batch=tr_data.next(), is_train=True)
-            outputs=mod.get_outputs()
-            print 'output', outputs.asnumpy()
-            mod.backward()
-            mod.update()
-        '''
+            '''
+            mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
+            init=mx.init.Xavier(factor_type='in', magnitude=2.34)
+            mod.init_params(initializer=init)
+            mod.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4})
+            for e in xrange(nepoch):
+                mod.forward(data_batch=tr_data.next(), is_train=True)
+                outputs=mod.get_outputs()
+                mod.backward()
+                mod.update()
+            '''
     elif model=='gru':
         init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_h

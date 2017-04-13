@@ -1,4 +1,4 @@
-import json
+import json, ijson, codecs
 import collections, requests
 import sys, io, bisect
 from nltk.corpus import stopwords
@@ -9,6 +9,56 @@ def read_content(path):
     data=json.loads(json_data)
     print 'Json loading succeed'
     return data
+
+def read_content_stream(path):
+    json_data=codecs.open(path, 'r', encoding='utf8', errors='ignore')
+    objs=ijson.items(json_data,'articles.item')
+    return objs
+def load_data_statics(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
+    if vocab==None:
+    	vocab={}
+        label_dict={}
+        label_rev_dict={}
+    idx=1
+    nins=0
+    newwords=0
+    stop=set(stopwords.words('english'))
+    tokenizer = RegexpTokenizer(r'\w+')
+    for obj in data:
+        nins+=1
+        for k in obj:
+            if 'meshMajor' in k:
+                for l in obj[k]:
+                    if l not in label_dict:
+			if not tr:
+			    continue
+                        label_dict[l]=len(label_dict)
+                        label_rev_dict[label_dict[l]]=l
+            elif 'abstractText' in k:
+                txt=tokenizer.tokenize(obj[k])
+                for w in txt:
+                    if w in stop:
+                        continue
+                    if len(w) and w not in vocab:
+			if not tr:
+                            newwords+=1
+			    continue
+                        vocab[w]=idx
+                        idx+=1
+            elif 'title' in k:
+                txt=tokenizer.tokenize(obj[k])
+                for w in txt:
+                    if w in stop:
+                        continue
+                    if len(w) and w not in vocab:
+			if not tr:
+                            newwords+=1
+			    continue
+			vocab[w]=idx
+                        idx+=1
+    print 'new words', newwords
+    print 'cur_words', len(vocab)
+    return nins, vocab, label_dict, label_rev_dict
 
 def load_data(data, vocab=None, label_dict=None, label_rev_dict=None, tr=True):
     if vocab==None:
@@ -111,5 +161,12 @@ def text2id(sentence, vocab):
     words=list(sentence)
     return [vocab[w] for w in words if len(w)]
 
+def chunkl(n, p):
+	m=n/p
+	return [m for _ in xrange(p-1)]+[n-(m*(p-1))]
+
 def accuracy(label, pred):
     return len(label==pred)/(0.0+len(pred))
+
+if __name__=='__main__':
+	print chunkl(12,10), sum(chunkl(12,10))
