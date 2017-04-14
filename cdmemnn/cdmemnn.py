@@ -62,6 +62,8 @@ class DataIter(mx.io.DataIter):
     def reset(self):
         random.shuffle(self.data)
 
+igi=0
+igv=0.0
 def RMSE(label, pred):
     ret=0.0
     n=0.0
@@ -69,7 +71,7 @@ def RMSE(label, pred):
     for i in xrange(len(label)):
         ret+=(label[i]-pred[i])**2
         n+=1.0
-    return np.sqrt(ret/n)
+    return np.sqrt((ret+igv)/(igi+n))
 
 def get_data(data, split, batch_size, user2item, item2user, upass, ipass):
     tr=random.sample(data, int(split*len(data)))
@@ -100,7 +102,7 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
     else:
         logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
-    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer='NAG', optimizer_params={'learning_rate':learning_rate, 'momentum': 0.995}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
+    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer='NAG', optimizer_params={'learning_rate':learning_rate, 'momentum': 0.995, 'lr_scheduler': mx.lr_scheduler.FactorScheduler(batch_size, factor=0.95)}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
@@ -120,15 +122,16 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
             grp_i.append(ig)
         network.forward(data_batch=mx.io.D)
     '''
-def convert_data(user, item, score, user_dict, item_dict, user2item, item2user, is_train):
+def convert_data(user, item, score, user_dict, item_dict, user2item, item2user, is_train=True):
     if user not in user_dict:
         user_dict[user]=len(user_dict)
     user=user_dict[user]
     if item not in item_dict:
         item_dict[item]=len(item_dict)
     item=item_dict[item]
-    user2item[user].add(item)
-    item2user[item].add(user)
+    if is_train:
+        user2item[user].add(item)
+        item2user[item].add(user)
     return (user, item, float(score))
 
 if __name__=='__main__':
@@ -165,11 +168,14 @@ if __name__=='__main__':
             for line in f:
                 tks=line.strip().split('\t')
                 if int(tks[0]) not in user_dict or int(tks[1]) not in item_dict:
+                    igi+=1
+                    igv+=(float(tks[2])-3.0)**2
                     continue
                 val.append(convert_data(int(tks[0]), int(tks[1]), float(tks[2]), user_dict, item_dict, user2item, item2user, False))
     print '#Users, ',len(user_dict)
     print '#Items, ',len(item_dict)
     print '#Ratings, ', len(data)
+    print 'Ingnored RMSE, ', np.sqrt(igv/igi)
     num_hidden=int(args.num_hidden)
     batch_size=int(args.batch_size)
     num_epoch=int(args.num_epoch)
