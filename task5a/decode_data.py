@@ -13,7 +13,7 @@ def read_content(path):
     return data
 
 def read_iter(path):
-    dw=open(path.split('.json')[0]+'.decode.json', 'w')
+    dw=open('/home/tzhao/Data/MeSH/'+path.split('/')[-1].split('.json')[0]+'.decode.json', 'w')
     with open(path,'r') as f:
         for line in f:
             line=line.decode('utf8', 'ignore')

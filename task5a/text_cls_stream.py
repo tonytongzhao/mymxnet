@@ -35,7 +35,7 @@ def ins_recall(label, pred):
         l=set(np.nonzero(label[i])[0])
         p=set(np.argsort(pred[i])[-50:])
         prec+=len(p & l)
-    return prec/(20.0*batch_size)
+    return prec/(50.0*batch_size)
 
 
 
@@ -75,10 +75,11 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
 	    data_names=['data']
 	    label_names=['label']
 	    return sym, data_names, label_names
-        for pidx in pins:    
+        for pidx in xrange(len(pins)):   
+            print 'partition ',pidx
             data={'articles':[]} 
-            for _ in xrange(pidx):
-                data.append(gen_data.next())
+            for _ in xrange(pins[pidx]):
+                data['articles'].append(gen_data.next())
             if val==None:
                 tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
             else:
@@ -91,63 +92,85 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
             else:
 	        mod = mx.mod.BucketingModule(ffn_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
             if is_train:
-                mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=3), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
-        
+                if pidx:
+                    sym, arg_params, aux_params = mx.model.load_checkpoint('./models/%s-%s'%(prefix,pidx-1), nepoch)
+                    mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label, for_training=True)
+                    mod.set_params(arg_params=arg_params, aux_params=aux_params)
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s'%(prefix,pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall])
+                else:
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s' % (prefix, pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
     elif model =='lstm':
         init_c = [('l%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_c + init_h
 	state_names=[x[0] for x in init_states]
-	if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
-        else:
-            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
-            vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
-            val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, init_states, buckets)
-        def lstm_gen(seq_len):
+	def lstm_gen(seq_len):
             sym=lstm.lstm_unroll(nlayer, seq_len, nwords, nhidden, nembed, nlabels, dropout)
 	    data_names=['data']+state_names
 	    label_names=['label']
 	    return sym, data_names, label_names
-	if len(buckets) == 1:
-	    mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
-        else:
-	    mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
-            '''
-            mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label)
-            init=mx.init.Xavier(factor_type='in', magnitude=2.34)
-            mod.init_params(initializer=init)
-            mod.init_optimizer(optimizer='adam', kvstore=None, optimizer_params={'learning_rate':1E-3, 'wd':1E-4})
-            for e in xrange(nepoch):
-                mod.forward(data_batch=tr_data.next(), is_train=True)
-                outputs=mod.get_outputs()
-                mod.backward()
-                mod.update()
-            '''
+    
+        for pidx in xrange(len(pins)):   
+            print 'partition ',pidx
+            data={'articles':[]} 
+            for _ in xrange(pins[pidx]):
+                data['articles'].append(gen_data.next())
+            if val==None:
+                tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            else:
+                ins,labels, pmids, v,ld,lrd=load_data(data, vocab, label_dict, label_rev_dict)
+                tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
+                vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
+                val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
+       	    if len(buckets) == 1:
+	        mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
+            else:
+	        mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+            if is_train:
+                if pidx:
+                    sym, arg_params, aux_params = mx.model.load_checkpoint('./models/%s-%s'%(prefix,pidx-1), nepoch)
+                    mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label, for_training=True)
+                    mod.set_params(arg_params=arg_params, aux_params=aux_params)
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s'%(prefix,pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall])
+                else:
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s' % (prefix, pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+   
+    
     elif model=='gru':
         init_h = [('l%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_h
 	state_names=[x[0] for x in init_states]
-        if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
-        else:
-            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
-            vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
-            val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, init_states, buckets)
-	def gru_gen(seq_len):
+        def gru_gen(seq_len):
             sym=gru.my_GRU_unroll(nlayer, seq_len, nwords, nhidden, nembed, nlabels, dropout)
 	    data_names=['data']+state_names
 	    label_names=['label']
 	    return sym, data_names, label_names
-	if len(buckets) == 1:
-	    mod = mx.mod.Module(*gru_gen(buckets[0]), context=contexts)
-        else:
-	    mod = mx.mod.BucketingModule(gru_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
-        if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=20), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
-    
+        for pidx in xrange(len(pins)):   
+            print 'partition ',pidx
+            data={'articles':[]} 
+            for _ in xrange(pins[pidx]):
+                data['articles'].append(gen_data.next())
+            if val==None:
+                tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            else:
+                ins,labels, pmids, v,ld,lrd=load_data(data, vocab, label_dict, label_rev_dict)
+                tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
+                vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
+                val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
+       	    if len(buckets) == 1:
+	        mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
+            else:
+	        mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+            if is_train:
+                if pidx:
+                    sym, arg_params, aux_params = mx.model.load_checkpoint('./models/%s-%s'%(prefix,pidx-1), nepoch)
+                    mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label, for_training=True)
+                    mod.set_params(arg_params=arg_params, aux_params=aux_params)
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s'%(prefix,pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall])
+                else:
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s' % (prefix, pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+   
+
     elif model=='bilstm':
         init_cf = [('lf%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_cb = [('lb%d_init_c'%l, (batch_size, nhidden)) for l in range(nlayer)]
@@ -155,12 +178,6 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
         init_hb = [('lb%d_init_h'%l, (batch_size, nhidden)) for l in range(nlayer)]
         init_states = init_cf + init_hf + init_cb + init_hb
 	state_names=[x[0] for x in init_states]
-        if val==None:
-            tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,init_states, buckets, split)
-        else:
-            tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, init_states, buckets)
-            vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
-            val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, init_states, buckets)
 	def bilstm_gen(seq_len):
             data=mx.sym.Variable('data')
             embed_weight=mx.sym.Variable('embed_weight')
@@ -177,12 +194,34 @@ def train(args, path, df, val, te, meshmap, nhidden, nembed, batch_size, nepoch,
             hidden=mx.sym.FullyConnected(data=hidden, weight=cls_weight, bias=cls_bias, num_hidden=nlabels, name='fc_cls')
             loss=mx.sym.LinearRegressionOutput(data=hidden, label=mx.sym.Variable('label'))
             return loss, ['data']+state_names, ['label']
-        if len(buckets) == 1:
-	    mod = mx.mod.Module(*bilstm_gen(buckets[0]), context=contexts)
-        else:
-	    mod = mx.mod.BucketingModule(bilstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts)
-        if is_train:
-            mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/'+prefix, period=10), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 50),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+        for pidx in xrange(len(pins)):   
+            print 'partition ',pidx
+            data={'articles':[]} 
+            for _ in xrange(pins[pidx]):
+                data['articles'].append(gen_data.next())
+            if val==None:
+                tr_data, val_data=get_data_iter(ins, labels, nlabels, batch_size,[], buckets, split)
+            else:
+                ins,labels, pmids, v,ld,lrd=load_data(data, vocab, label_dict, label_rev_dict)
+                tr_data=BucketFlexIter(ins, labels, nlabels, batch_size, [], buckets)
+                vins,vlabels, vpmids, v,ld,lrd=load_data(read_content(os.path.join(path,val)),vocab, label_dict, label_rev_dict, tr=False)
+                val_data=BucketFlexIter(vins, vlabels, nlabels, batch_size, [], buckets)
+       	    if len(buckets) == 1:
+	        mod = mx.mod.Module(*lstm_gen(buckets[0]), context=contexts)
+            else:
+	        mod = mx.mod.BucketingModule(lstm_gen, default_bucket_key=tr_data.default_bucket_key, context=contexts) 
+            if is_train:
+                if pidx:
+                    sym, arg_params, aux_params = mx.model.load_checkpoint('./models/%s-%s'%(prefix,pidx-1), nepoch)
+                    mod.bind(data_shapes=tr_data.provide_data, label_shapes=tr_data.provide_label, for_training=True)
+                    mod.set_params(arg_params=arg_params, aux_params=aux_params)
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s'%(prefix,pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall])
+                else:
+                    mod.fit(tr_data, eval_data=val_data, num_epoch=nepoch, epoch_end_callback=mx.callback.do_checkpoint('./models/%s-%s' % (prefix, pidx), period=nepoch), eval_metric=['rmse', accuracy, ins_recall],batch_end_callback=mx.callback.Speedometer(batch_size, 500),initializer=mx.init.Xavier(factor_type="in", magnitude=2.34), optimizer='sgd', optimizer_params={'learning_rate':eta, 'momentum': 0.9, 'wd': 0.00001})
+      
+
+
+
 
     return vocab, label_dict, label_rev_dict, prefix, buckets, mesh_map, mesh_rev_map
 
@@ -193,7 +232,7 @@ def predict(te, vocab ,label_dict, label_rev_dict, mesh_map, mesh_rev_map, prefi
     print 'tins', len(tins)
     res={}
     res["documents"]=[]
-    param_file = "./models/%s" % prefix
+    param_file = "./models/%s-%s" % (prefix, 30)
     #arg_param,aux_param=load_param(param_file)    
     make_predict(res, tins, len(label_dict), tpmids, model, param_file, buckets, nhidden, nlayer, vocab, dropout, label_rev_dict, mesh_map, mesh_rev_map,nepoch, batch_size)
     return res
