@@ -48,6 +48,9 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
     rating=mx.sym.Variable('rating')
     grp_u=mx.sym.Variable('grp_u')
     grp_i=mx.sym.Variable('grp_i')
+    
+    weight_emu=mx.sym.Variable('emu_weight')
+    weight_emi=mx.sym.Variable('emi_weight')
 
     weight_u=mx.sym.Variable('u_weight')
     weight_i=mx.sym.Variable('i_weight')
@@ -108,8 +111,8 @@ def get_cdnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, n
             mi_state=GRUState(h=m_i)
             next_state=myGRU(num_embed, indata=cur_col_i,prev_state=mi_state, param=param_icells[0], seqidx=0, layeridx=0, dropout=dropout)
             m_i=next_state.h
-    m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u), dim=1)
-    m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i), dim=1)
+    m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
+    m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
     pred=m_u*m_i
     pred=mx.sym.sum_axis(data=pred, axis=1)
     pred=mx.sym.Flatten(data=pred)
