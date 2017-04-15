@@ -102,7 +102,7 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
     else:
         logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
-    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer='NAG', optimizer_params={'learning_rate':learning_rate, 'momentum': 0.995, 'lr_scheduler': mx.lr_scheduler.FactorScheduler(batch_size, factor=0.95)}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
+    network.fit(train, eval_data=val_iter, eval_metric=RMSE, optimizer='NAG', optimizer_params={'learning_rate':learning_rate, 'momentum': 0.995, 'lr_scheduler': mx.lr_scheduler.FactorScheduler(batch_size*3, factor=0.95)}, num_epoch=num_epoch, batch_end_callback=mx.callback.Speedometer(batch_size, 500))
     '''
     for i in xrange(num_epoch):
         batch_data=random.sample(data, batch_size)
@@ -137,6 +137,7 @@ def convert_data(user, item, score, user_dict, item_dict, user2item, item2user, 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('-train', help='Data file', dest='fi', required=True)
+    parser.add_argument('-model', help='cdmemnn, colgru, colattnn', default='cdmemnn')
     parser.add_argument('-nhidden', help='num of hidden', dest='num_hidden', default=50)
     parser.add_argument('-nembed', help='num of embedding', dest='num_embed', default=50)
     parser.add_argument('-batch_size', help='batch size', dest='batch_size', default=500)
@@ -186,7 +187,12 @@ if __name__=='__main__':
     ipass=int(args.ipass)
     npass=int(args.npass)
     split=float(args.split)
-    net=model.get_cdnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    if args.model=='cdmemnn':
+        net=model.get_cdmemnn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    elif args.model=='colgru':
+        net=model.get_colgru(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    elif args.model=='colattnn':
+        net=model.get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
     train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
