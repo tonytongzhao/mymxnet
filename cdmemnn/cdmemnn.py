@@ -98,7 +98,7 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
         train=DataIter(data, batch_size, user2item, item2user, upass, ipass)
         val_iter=DataIter(val, batch_size, user2item, item2user, upass, ipass)
     if args.log:
-        logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['res']), logname+'.log'), level=logging.DEBUG)
+        logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn']), logname+'.log'), level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
