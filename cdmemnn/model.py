@@ -7,6 +7,28 @@ GRUState=namedtuple('GRUState', ['h'])
 GRUParam=namedtuple('GRUParam', ['gates_i2h_weight','gates_i2h_bias', 'gates_h2h_weight', 'gates_h2h_bias','trans_i2h_weight','trans_i2h_bias', 'trans_h2h_weight', 'trans_h2h_bias'])
 
 
+LSTMState=namedtuple('LSTMState', ['c', 'h'])
+LSTMParam=namedtuple('LSTMParam', ['i2h_weight', 'i2h_bias', 'h2h_weight', 'h2h_bias'])
+
+def lstm(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
+    if dropout:
+        indata=mx.sym.Dropout(data=indata, p=dropout)
+    i2h=mx.sym.FullyConnected(data=indata, num_hidden=num_hidden*4, weight=param.i2h_weight, bias=param.i2h_bias, name='t%d_l%d_i2h'%(seqidx, layeridx))
+    h2h=mx.sym.FullyConnected(data=prev_state.h, num_hidden=num_hidden*4, weight=param.h2h_weight, bias=param.h2h_bias, name='t%d_l%d_h2h'%(seqidx, layeridx))
+    gates=i2h+h2h
+    slice_gates=mx.sym.SliceChannel(gates, num_outputs=4)
+    in_gate=mx.sym.Activation(data=slice_gates[0], act_type='sigmoid')
+    in_transform=mx.sym.Activation(data=slice_gates[1], act_type='tanh')
+    forget_gate=mx.sym.Activation(slice_gates[2], act_type='sigmoid')
+    out_gate=mx.sym.Activation(slice_gates[3], act_type='sigmoid')
+
+    next_c=(forget_gate*prev_state.c)+(in_gate*in_transform)
+    next_h=out_gate*mx.sym.Activation(next_c, act_type='tanh')
+    return LSTMState(c=next_c, h=next_h)
+
+
+  
+
 def myGRU(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     if dropout>0.:
         indata=mx.sym.Dropout(data=indata, p=dropout)
@@ -34,6 +56,108 @@ def myGRU(num_hidden, indata, prev_state, param, seqidx, layeridx, dropout=0.):
     next_h=prev_state.h+update_gate*(htrans_act-prev_state.h)
     return GRUState(h=next_h)
 
+def bi_lstm_unroll(indata, cur, concat_weight, seq_len,  num_hidden, fparam, bparam, dropout=0., layeridx=0): 
+    last_states=[] 
+    last_states.append(LSTMState(c=cur, h=cur))
+    last_states.append(LSTMState(c=cur, h=cur))
+    forward_hidden=[]
+    for seqidx in xrange(seq_len):
+        hidden=indata[seqidx]
+        next_state=lstm(num_hidden, hidden,last_states[0], fparam[layeridx], seqidx, layeridx, dropout)
+        hidden=next_state.h
+        last_states[0]=next_state
+        forward_hidden.append(hidden)
+
+    backward_hidden=[]
+    for seqidx in xrange(seq_len):
+        seqidx=seq_len-seqidx-1
+        hidden=indata[seqidx]
+        next_state=lstm(num_hidden, hidden, last_states[1], bparam[layeridx], seqidx, layeridx, dropout)
+        hidden=next_state.h
+        last_states[1]=next_state
+        backward_hidden.append(hidden)
+    
+    hidden_all=[]
+    for i in xrange(seq_len):
+        hidden_all.append(mx.sym.FullyConnected(data=mx.sym.Concat(*[forward_hidden[i], backward_hidden[i]],dim=1), num_hidden=num_hidden, weight=concat_weight, no_bias=True))
+    return hidden_all
+
+def get_colbilstm(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, nupass, nipass, npass, dropout=0.):
+    '''
+    init_cf = [('lf%d_init_c_weight'%l, (batch_size, num_hidden)) for l in range(num_layer)]
+    init_cb = [('lb%d_init_c_weight'%l, (batch_size, num_hidden)) for l in range(num_layer)]
+    init_hf = [('lf%d_init_h_weight'%l, (batch_size, num_hidden)) for l in range(num_layer)]
+    init_hb = [('lb%d_init_h_weight'%l, (batch_size, num_hidden)) for l in range(num_layer)]
+    init_states = init_cf + init_hf + init_cb + init_hb
+    state_names=[x[0] for x in init_states]
+    '''   
+    user=mx.sym.Variable('user')
+    item=mx.sym.Variable('item')
+    rating=mx.sym.Variable('rating')
+    grp_u=mx.sym.Variable('grp_u')
+    grp_i=mx.sym.Variable('grp_i')
+    
+    weight_emu=mx.sym.Variable('emu_weight')
+    weight_emi=mx.sym.Variable('emi_weight')
+
+    weight_u=mx.sym.Variable('u_weight')
+    weight_i=mx.sym.Variable('i_weight')
+
+    #weight_uu=mx.sym.Variable('aff_u', shape=(num_embed, num_embed), init=mx.initializer.Xavier(rnd_type='gaussian', factor_type='avg', magnitude=2))
+    #weight_ii=mx.sym.Variable('aff_i', shape=(num_embed, num_embed), init=mx.initializer.Xavier(rnd_type='gaussian', factor_type='avg', magnitude=2))
+
+    concat_weight=mx.sym.Variable('concat_weight')
+    
+    weight_z=mx.sym.Variable('z_weight')
+    bias_z=mx.sym.Variable('z_bias')
+    '''
+    last_states=[]
+    last_states.append(LSTMState(c=mx.sym.Variable('lf%d_init_c_weight'%layeridx), h=mx.sym.Variable('lf%d_init_h_weight'%layeridx)))
+    last_states.append(LSTMState(c=mx.sym.Variable('lb%d_init_c_weight'%layeridx), h=mx.sym.Variable('lb%d_init_h_weight'%layeridx)))
+    '''
+    fparam=[]
+    bparam=[]
+    for layeridx in xrange(num_layer):
+        fparam.append(LSTMParam(i2h_weight=mx.sym.Variable('lf%d_i2h_weight'%layeridx), i2h_bias=mx.sym.Variable('lf%d_i2h_bias'%layeridx), h2h_weight=mx.sym.Variable('lf%d_h2h_weight'%layeridx), h2h_bias=mx.sym.Variable('lf%d_h2h_bias'%layeridx)))
+        bparam.append(LSTMParam(i2h_weight=mx.sym.Variable('lb%d_i2h_weight'%layeridx), i2h_bias=mx.sym.Variable('lb%d_i2h_bias'%layeridx), h2h_weight=mx.sym.Variable('lb%d_h2h_weight'%layeridx), h2h_bias=mx.sym.Variable('lb%d_h2h_bias'%layeridx)))
+
+    
+    
+    m_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
+    m_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
+
+    grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
+    grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
+
+    col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
+    col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
+    
+    for layidx in xrange(num_layer):
+        col_u=bi_lstm_unroll(col_u, m_u, concat_weight, nupass, num_hidden, fparam, bparam, dropout, layidx)
+    m_u=[mx.sym.expand_dims(x, axis=1) for x in col_u]
+    hidden=mx.sym.Concat(*m_u, dim=1)
+    m_u=mx.sym.sum_axis(hidden, axis=1)/nupass
+     
+    for layidx in xrange(num_layer):
+        col_i=bi_lstm_unroll(col_i, m_i, concat_weight, nipass, num_hidden, fparam, bparam, dropout, layidx)
+    m_i=[mx.sym.expand_dims(x, axis=1) for x in col_i]
+    hidden=mx.sym.Concat(*m_i, dim=1)
+    m_i=mx.sym.sum_axis(hidden, axis=1)/nipass
+           
+    
+        
+    m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
+    m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
+    pred=m_u*m_i
+    pred=mx.sym.sum_axis(data=pred, axis=1)
+    pred=mx.sym.Flatten(data=pred)
+    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
+#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+    return pred
+
+
+ 
 def get_cdmemnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item, nupass, nipass, npass, dropout=0.):
     last_states=[]
     param_ucells=[]

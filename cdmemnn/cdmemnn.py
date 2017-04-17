@@ -195,6 +195,8 @@ if __name__=='__main__':
         net=model.get_colgru(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     elif args.model=='colattnn':
         net=model.get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    elif args.model=='colbilstm':
+        net=model.get_colbilstm(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     else:
         raise NameError('No matched model, only support cdmemnn, colattnn, colgru')
     logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
