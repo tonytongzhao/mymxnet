@@ -121,8 +121,8 @@ def get_cdmemnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item
         mi.append(next_s.h)
     m_u=mu[-1]
     m_i=mi[-1]
-    #m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
-    #m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
+    m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
+    m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
     
     pred=m_u*m_i
     pred=mx.sym.sum_axis(data=pred, axis=1)
