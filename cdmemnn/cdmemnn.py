@@ -98,7 +98,9 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
         train=DataIter(data, batch_size, user2item, item2user, upass, ipass)
         val_iter=DataIter(val, batch_size, user2item, item2user, upass, ipass)
     if args.log:
-        logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+['cdmemnn']), logname+'.log'), level=logging.DEBUG)
+        if os.path.exists(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model]))):
+            os.path.mkdir(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model])))
+        logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+[args.model]), logname+'.log'), level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.DEBUG)
     logging.info('start with arguments %s', args)
@@ -193,6 +195,8 @@ if __name__=='__main__':
         net=model.get_colgru(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     elif args.model=='colattnn':
         net=model.get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
+    else:
+        raise NameError('No matched model, only support cdmemnn, colattnn, colgru')
     logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
     train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
