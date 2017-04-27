@@ -39,7 +39,7 @@ class DataIter(mx.io.DataIter):
             scores=[]
             grp_u=[]
             grp_i=[]
-           #Generate each batch data and yield the result
+            #Generate each batch data and yield the result
             for i in xrange(self.batch_size):
                 j=k*self.batch_size+i
                 user, item, score=self.data[j]
@@ -71,7 +71,7 @@ def RMSE(label, pred):
     for i in xrange(len(label)):
         ret+=(label[i]-pred[i])**2
         n+=1.0
-    return np.sqrt((ret+igv)/(igi+n))
+    return np.sqrt((ret)/(n))
 
 def get_data(data, split, batch_size, user2item, item2user, upass, ipass):
     tr=random.sample(data, int(split*len(data)))
@@ -98,8 +98,8 @@ def train(args,data_path, data, val, split, network, batch_size, num_epoch, user
         train=DataIter(data, batch_size, user2item, item2user, upass, ipass)
         val_iter=DataIter(val, batch_size, user2item, item2user, upass, ipass)
     if args.log:
-        if os.path.exists(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model]))):
-            os.path.mkdir(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model])))
+        if not os.path.exists(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model]))):
+            os.mkdir(os.path.join('/'.join(data_path.split('/')[:-1]+[args.model])))
         logging.basicConfig(filename=os.path.join('/'.join(data_path.split('/')[:-1]+[args.model]), logname+'.log'), level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.DEBUG)
@@ -199,7 +199,7 @@ if __name__=='__main__':
         net=model.get_colbilstm(batch_size, num_embed, num_hidden, num_layer, len(user_dict), len(item_dict), upass, ipass, npass, float(args.dropout))
     else:
         raise NameError('No matched model, only support cdmemnn, colattnn, colgru')
-    logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
+    logname='upass_'+str(args.upass)+'_ipass_'+str(args.ipass)+"_npass_"+str(args.npass)+"_embed_"+str(args.num_embed)+'_hidden_'+str(args.num_hidden)+"_eta_"+str(args.learning_rate)+"_batch_size_"+str(args.batch_size)
     train(args, args.fi,data, val, split, net, batch_size, num_epoch, user2item, item2user, upass, ipass, learning_rate, logname)
 
 

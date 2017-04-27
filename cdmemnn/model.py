@@ -129,9 +129,10 @@ def get_colbilstm(batch_size, num_embed, num_hidden, num_layer, num_user, num_it
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
+    grp_u=mx.sym.BlockGrad(data=grp_u)
+    grp_i=mx.sym.BlockGrad(data=grp_i)
     col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
     col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
-    
     for layidx in xrange(num_layer):
         col_u=bi_lstm_unroll(col_u, m_u, concat_weight, nupass, num_hidden, fparam, bparam, dropout, layidx)
     m_u=[mx.sym.expand_dims(x, axis=1) for x in col_u]
@@ -196,6 +197,8 @@ def get_cdmemnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
+    grp_u=mx.sym.BlockGrad(data=grp_u)
+    grp_i=mx.sym.BlockGrad(data=grp_i)
     col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
     col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
     
@@ -292,6 +295,8 @@ def get_colgru(batch_size, num_embed, num_hidden, num_layer, num_user, num_item,
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
+    grp_u=mx.sym.BlockGrad(data=grp_u)
+    grp_i=mx.sym.BlockGrad(data=grp_i)
     col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
     col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
     for _ in xrange(npass):
@@ -364,6 +369,8 @@ def get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, num_user, n
     grp_u= mx.sym.Embedding(data=grp_u, input_dim=num_user, output_dim=num_embed, weight=weight_u)
     grp_i= mx.sym.Embedding(data=grp_i, input_dim=num_item, output_dim=num_embed, weight=weight_i)
 
+    grp_u=mx.sym.BlockGrad(data=grp_u)
+    grp_i=mx.sym.BlockGrad(data=grp_i)
     col_u=mx.sym.SliceChannel(data=grp_u, axis=1, num_outputs=nupass, squeeze_axis=1)
     col_i=mx.sym.SliceChannel(data=grp_i, axis=1, num_outputs=nipass, squeeze_axis=1)
     
@@ -372,8 +379,8 @@ def get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, num_user, n
             cur_col_u=col_u[i]
             #cur_col_u=mx.sym.BlockGrad(data=cur_col_u)
             q_u=mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_u)
-            z=[cur_col_u, m_u, q_u,  mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
-            #z=[ mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
+            #z=[cur_col_u, m_u, q_u,  mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
+            z=[ mx.sym.abs(q_u-m_u), mx.sym.abs(q_u-cur_col_u), mx.sym.abs(cur_col_u-m_u)]
             z=mx.sym.Concat(*z, dim=1)
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z1, bias=bias_z1)
             z=mx.sym.Activation(data=z, act_type='relu')
@@ -390,8 +397,8 @@ def get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, num_user, n
             cur_col_i=col_i[i]
             #cur_col_i=mx.sym.BlockGrad(data=cur_col_i)
             q_i=mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_i)
-            z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
-            #z=[mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
+            #z=[cur_col_i, m_i, q_i, mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
+            z=[mx.sym.abs(q_i-m_i), mx.sym.abs(q_i-cur_col_i), mx.sym.abs(cur_col_i-m_i)]
             z=mx.sym.Concat(*z, dim=1)
             z=mx.sym.FullyConnected(data=z, num_hidden=num_hidden,weight=weight_z1, bias=bias_z1)
             z=mx.sym.Activation(data=z, act_type='relu')
