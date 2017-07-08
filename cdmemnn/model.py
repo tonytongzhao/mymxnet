@@ -149,12 +149,13 @@ def get_colbilstm(batch_size, num_embed, num_hidden, num_layer, num_user, num_it
         
     m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
     m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
-    pred=m_u*m_i
-    pred=mx.sym.sum_axis(data=pred, axis=1)
-    pred=mx.sym.Flatten(data=pred)
-    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
-#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
-#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+#    pred=m_u*m_i
+#    pred=mx.sym.sum_axis(data=pred, axis=1)
+#    pred=mx.sym.Flatten(data=pred)
+#    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+    pred=mx.sym.abs(m_u-m_i)
+    pred=mx.sym.FullyConnected(data=pred, num_hidden=2, name='cls')   
+    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
 
@@ -251,12 +252,12 @@ def get_cdmemnn(batch_size, num_embed, num_hidden, num_layer, num_user, num_item
     m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
     m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
     
-    pred=m_u*m_i
-    pred=mx.sym.sum_axis(data=pred, axis=1)
-    pred=mx.sym.Flatten(data=pred)
-    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
-#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
-#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+    pred=mx.sym.abs(m_u-m_i)
+#    pred=mx.sym.sum_axis(data=pred, axis=1)
+#    pred=mx.sym.Flatten(data=pred)
+#    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+    pred=mx.sym.FullyConnected(data=pred, num_hidden=2, name='cls')   
+    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
 
@@ -317,12 +318,13 @@ def get_colgru(batch_size, num_embed, num_hidden, num_layer, num_user, num_item,
             m_i=next_state.h
     m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
     m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
-    pred=m_u*m_i
-    pred=mx.sym.sum_axis(data=pred, axis=1)
-    pred=mx.sym.Flatten(data=pred)
-    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
-#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
-#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+#    pred=m_u*m_i
+    pred=mx.sym.abs(m_u-m_i)
+#    pred=mx.sym.sum_axis(data=pred, axis=1)
+#    pred=mx.sym.Flatten(data=pred)
+#    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+    pred=mx.sym.FullyConnected(data=pred, num_hidden=2, name='cls')   
+    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
 
@@ -413,11 +415,12 @@ def get_c_attention_nn(batch_size, num_embed, num_hidden, num_layer, num_user, n
     #m_u=mx.sym.Concat(m_u, mx.sym.Embedding(data=user, input_dim=num_user, output_dim=num_embed, weight=weight_emu), dim=1)
     #m_i=mx.sym.Concat(m_i, mx.sym.Embedding(data=item, input_dim=num_item, output_dim=num_embed, weight=weight_emi), dim=1)
     
-    pred=m_u*m_i
-    pred=mx.sym.sum_axis(data=pred, axis=1)
-    pred=mx.sym.Flatten(data=pred)
-    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
-#    pred=mx.sym.FullyConnected(data=pred, num_hidden=5, name='cls')   
-#    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
+#    pred=m_u*m_i
+    pred=mx.sym.abs(m_u-m_i)
+#    pred=mx.sym.sum_axis(data=pred, axis=1)
+#    pred=mx.sym.Flatten(data=pred)
+#    pred=mx.sym.LinearRegressionOutput(data=pred, label=rating)
+    pred=mx.sym.FullyConnected(data=pred, num_hidden=2, name='cls')   
+    pred=mx.sym.SoftmaxOutput(data=pred, label=rating)
     return pred
 
